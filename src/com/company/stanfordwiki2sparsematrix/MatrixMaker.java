@@ -48,6 +48,15 @@ public class MatrixMaker {
         return columnsIndices;
     }
 
+    private Map<Integer, String> getNPs(ArrayList<String> clauses) {
+        Map<Integer, String> npPosition = new LinkedHashMap<>();
+
+        for (int i = 0; i < clauses.size(); i++)
+            if (clauses.get(i).contains("NP"))
+                npPosition.put(i, clauses.get(i));
+
+        return npPosition;
+    }
 
     private void makeMatrix(String pathFile) throws IOException, InvalidLengthsException {
         String file = readFile(pathFile, true);
@@ -171,6 +180,137 @@ public class MatrixMaker {
 
 
     }
+
+    private void makeMatrixNPs(String pathFile) throws IOException, InvalidLengthsException {
+        String file = readFile(pathFile, true);
+
+        ///DECLARATIONS
+        int level = 1 + 1;
+        Map<String, Integer> lMapTokenRow = new HashMap<>();
+        Map<String, String> lpreClause;
+        ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
+        if (pages.get(0).equals(""))
+            pages.remove(0);
+
+        for (String p : pages) {
+            ArrayList<String> sentences = new ArrayList(Arrays.asList(p.split("%%#SEN ")));
+            String pageTitle = sentences.get(0).trim();
+            System.out.println("page: " + pageTitle);
+            sentences.remove(0);
+
+            for (String s : sentences) {
+                ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n")));
+                String sentenceID = lines.get(0).trim();
+                System.out.println("\t\tsentence: " + sentenceID);
+                lines.remove(0);
+                Set<String> lClausesSeen = new HashSet<>();
+                ArrayList<String> lSubClausesSeen = new ArrayList<>();
+                lpreClause = new HashMap<>();
+                for (String l : lines) {
+                    String[] splittedLine = l.split("\t");
+                    String token = splittedLine[0];
+                    String lemma = splittedLine[1];
+                    String posTag = splittedLine[2];
+                    String constituency = splittedLine[3];
+                    String dependencyHead = splittedLine[4];
+                    String dependency = splittedLine[5];
+                    String token_pos = lemma + "_" + posTag;
+                    if (dependency.equals("PUNCT"))
+                        continue;
+                    /***
+                     * 1. Get the token and store it in a dictionary string:int, with its row index as value:
+                     *      {"the_DT":0, "car_NN":1, ...}
+                     *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrix
+                     */
+                    if (matrix.cMapTokenRow.containsKey(token_pos))
+                        matrix.cRows.add(matrix.cMapTokenRow.get(token_pos));
+                    else {
+                        matrix.cMapTokenRow.put(token_pos, row_i);
+                        matrix.cRows.add(row_i);
+                        row_i++;
+                    }
+
+                    /**
+                     * 2. Using the constituency results, we find all the NPs clauses contained in the phrase.
+                     *      We discard, at the beggining, any other type of clause (VP, ADJP, PP, PRP, etc).
+                     *
+                     */
+                    if (!constituency.contains("NP"))
+                        continue;
+
+                    ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
+                    Map<Integer, String> lNPposition = getNPs(clauses);
+
+                    if (level > clauses.size())
+                        level = clauses.size();
+                    String targetClause = clauses.get(clauses.size() - level);
+                    String clauseInitials = targetClause.split("_")[0];
+                    lClausesSeen.add(clauseInitials);
+                    lSubClausesSeen.add(targetClause);
+
+                    /**
+                     * 2.1 We get the tags of what constitutes the targetClause. Such that:
+                     * a dictionary str:str with clauseTarget as key and a key describing its components as values:
+                     * {"NP_18":"DET_NN_JJ', 'VP_70':'VBZ_NP',...}
+                     *
+                     *
+                     */
+                    //TODO: I could store this preClause structure for later use.
+                    String tempPreClause;
+                    if (clauses.size() >= level + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
+                        tempPreClause = clauses.get(clauses.size() - (level + 1));
+                    else
+                        tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
+
+                    if (lpreClause.containsKey(targetClause)) {
+                        if (!lpreClause.get(targetClause).contains(tempPreClause))
+                            lpreClause.put(targetClause, lpreClause.get(targetClause) + ":" + tempPreClause);
+                    } else
+                        lpreClause.put(targetClause, tempPreClause);
+
+
+                }// end of current line. Sentence is completely read.
+                /**
+                 * 3. Once the complete pass over the sentence is done, we get what represents each column.
+                 * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
+                 * the clauses, columns are the values: {"NP_18": [1,3,5,7], "VP_70":[2,4], ...}
+                 */
+                if (lClausesSeen.isEmpty())
+                    continue;
+                Map<String, ArrayList<Integer>> lSubClausesColumns = clauseToIndices(lSubClausesSeen);
+                for (Map.Entry<String, ArrayList<Integer>> entry : lSubClausesColumns.entrySet()) {
+                    String clause = entry.getKey();
+                    ArrayList value_j = entry.getValue();
+                    matrix.cSubClausesColumns.get(clause).addAll(value_j);
+                }
+
+                if (lSubClausesColumns.size() != lpreClause.size())
+                    throw new Utils.InvalidLengthsException("These lengths should be equal!!");
+
+                /**
+                 * 3.2 We get a dict str:dict<str:list<int>> to map for desired clause columns.
+                 * Such as this: {"NP":{"DET_NN_JJ":[1,3,5,7]}}
+                 */
+                for (String clause : lClausesSeen) {
+                    for (Map.Entry<String, String> entry : lpreClause.entrySet()) {
+                        String subClause = entry.getKey();
+                        String subClauseComponents = entry.getValue();
+                        if (subClause.contains(clause + "_"))
+                            matrix.cClauseSubClauseColumns.get(clause).get(subClauseComponents).addAll(lSubClausesColumns.get(subClause));
+                    }
+                }
+                column_j++;
+
+            }
+        }
+        System.out.println();
+
+
+    }
+
+
+
+
 //    public  void run() throws InterruptedException {
 //        long start = System.nanoTime();
 //        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
