@@ -53,7 +53,7 @@ public class MatrixMaker {
 
         for (int i = 0; i < clauses.size(); i++)
             if (clauses.get(i).contains("NP"))
-                npPosition.put(i, clauses.get(i));
+                npPosition.put(i + column_j, clauses.get(i));
 
         return npPosition;
     }
@@ -187,8 +187,10 @@ public class MatrixMaker {
         ///DECLARATIONS
         int level = 1 + 1;
         Map<String, Integer> lMapTokenRow = new HashMap<>();
-        Map<String, String> lpreClause;
         ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
+        Map<String, String> lpreClause;
+        ArrayList<Map<Integer, String>> lListNPposition;
+
         if (pages.get(0).equals(""))
             pages.remove(0);
 
@@ -206,6 +208,8 @@ public class MatrixMaker {
                 Set<String> lClausesSeen = new HashSet<>();
                 ArrayList<String> lSubClausesSeen = new ArrayList<>();
                 lpreClause = new HashMap<>();
+                lListNPposition = new ArrayList<>();
+
                 for (String l : lines) {
                     String[] splittedLine = l.split("\t");
                     String token = splittedLine[0];
@@ -215,6 +219,7 @@ public class MatrixMaker {
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
+
                     if (dependency.equals("PUNCT"))
                         continue;
                     /***
@@ -232,7 +237,7 @@ public class MatrixMaker {
 
                     /**
                      * 2. Using the constituency results, we find all the NPs clauses contained in the phrase.
-                     *      We discard, at the beggining, any other type of clause (VP, ADJP, PP, PRP, etc).
+                     *      We discard, at the beginning, any other type of clause (VP, ADJP, PP, PRP, etc).
                      *
                      */
                     if (!constituency.contains("NP"))
@@ -240,34 +245,40 @@ public class MatrixMaker {
 
                     ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
                     Map<Integer, String> lNPposition = getNPs(clauses);
-
-                    if (level > clauses.size())
-                        level = clauses.size();
-                    String targetClause = clauses.get(clauses.size() - level);
-                    String clauseInitials = targetClause.split("_")[0];
-                    lClausesSeen.add(clauseInitials);
-                    lSubClausesSeen.add(targetClause);
-
+                    lListNPposition.add(lNPposition);
                     /**
-                     * 2.1 We get the tags of what constitutes the targetClause. Such that:
-                     * a dictionary str:str with clauseTarget as key and a key describing its components as values:
-                     * {"NP_18":"DET_NN_JJ', 'VP_70':'VBZ_NP',...}
-                     *
-                     *
+                     * We get the preclauses of each of the NPs this token belongs to
                      */
-                    //TODO: I could store this preClause structure for later use.
-                    String tempPreClause;
-                    if (clauses.size() >= level + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
-                        tempPreClause = clauses.get(clauses.size() - (level + 1));
-                    else
-                        tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
+                    for (Map.Entry<Integer, String> entry : lNPposition.entrySet()) {
+                        Integer index_j = entry.getKey();
+                        String targetClause = entry.getValue();
 
-                    if (lpreClause.containsKey(targetClause)) {
-                        if (!lpreClause.get(targetClause).contains(tempPreClause))
-                            lpreClause.put(targetClause, lpreClause.get(targetClause) + ":" + tempPreClause);
-                    } else
-                        lpreClause.put(targetClause, tempPreClause);
+                        String clauseInitials = targetClause.split("_")[0];
+                        lClausesSeen.add(clauseInitials);
+                        lSubClausesSeen.add(targetClause);
 
+                        /**
+                         * 2.1 We get the tags of what constitutes the targetClause. Such that:
+                         * a dictionary str:str with clauseTarget as key and a key describing its components as values:
+                         * {"NP_18":"DET_NN_JJ', 'VP_70':'VBZ_NP',...}
+                         *
+                         *
+                         */
+                        //TODO: I could store this preClause structure for later use.
+                        String tempPreClause;
+                        if (clauses.size() >= level + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
+                            tempPreClause = clauses.get(clauses.size() - (level + 1));
+                        else
+                            tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
+
+                        if (lpreClause.containsKey(targetClause)) {
+                            if (!lpreClause.get(targetClause).contains(tempPreClause))
+                                lpreClause.put(targetClause, lpreClause.get(targetClause) + ":" + tempPreClause);
+                        } else
+                            lpreClause.put(targetClause, tempPreClause);
+
+
+                    }
 
                 }// end of current line. Sentence is completely read.
                 /**
@@ -277,27 +288,30 @@ public class MatrixMaker {
                  */
                 if (lClausesSeen.isEmpty())
                     continue;
-                Map<String, ArrayList<Integer>> lSubClausesColumns = clauseToIndices(lSubClausesSeen);
-                for (Map.Entry<String, ArrayList<Integer>> entry : lSubClausesColumns.entrySet()) {
-                    String clause = entry.getKey();
-                    ArrayList value_j = entry.getValue();
-                    matrix.cSubClausesColumns.get(clause).addAll(value_j);
-                }
 
-                if (lSubClausesColumns.size() != lpreClause.size())
-                    throw new Utils.InvalidLengthsException("These lengths should be equal!!");
+                Map<String, ArrayList<Integer>> lSubClausesColumns = new DefaultDict<>();
+                for (Map<Integer, String> npPosition : lListNPposition) {
+                    for (Map.Entry<Integer, String> entry : npPosition.entrySet()) {
+                        int index_j = entry.getKey();
+                        String v = entry.getValue();
+                        for (String k2 : lpreClause.keySet()) {
+                            if (k2.equals(v)) {
+                                matrix.cSubClausesColumns.get(v).add(index_j);
+                                lSubClausesColumns.get(v).add(index_j);
+                            }
+                        }
 
-                /**
-                 * 3.2 We get a dict str:dict<str:list<int>> to map for desired clause columns.
-                 * Such as this: {"NP":{"DET_NN_JJ":[1,3,5,7]}}
-                 */
-                for (String clause : lClausesSeen) {
-                    for (Map.Entry<String, String> entry : lpreClause.entrySet()) {
-                        String subClause = entry.getKey();
-                        String subClauseComponents = entry.getValue();
-                        if (subClause.contains(clause + "_"))
-                            matrix.cClauseSubClauseColumns.get(clause).get(subClauseComponents).addAll(lSubClausesColumns.get(subClause));
                     }
+
+                    }
+
+                for (String cl : lClausesSeen) {
+                    for (Map.Entry<String, String> entry : lpreClause.entrySet()) {
+                        String clause = entry.getKey();
+                        String clauseComponents = entry.getValue();
+                        matrix.cClauseSubClauseColumns.get(cl).get(clauseComponents).addAll(lSubClausesColumns.get(clause));
+                    }
+
                 }
                 column_j++;
 
@@ -343,11 +357,8 @@ public class MatrixMaker {
 
         ///> This loops goes file by file
         for (String path : listPaths) {
-
             System.out.println(Integer.toString(idx) + ": " + path);
-            //necesito aqui una funcion que me regrese  un objeto con todas las estructuras necesarias para armar la matriz
-//            buildingMatrix = makeMatrix(path,buildingMatrix);
-            this.makeMatrix(path);
+            this.makeMatrixNPs(path);
             idx++;
             System.out.flush();
         }
