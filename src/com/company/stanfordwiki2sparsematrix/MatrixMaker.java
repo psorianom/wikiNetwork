@@ -19,7 +19,7 @@ public class MatrixMaker {
         MatrixMaker.nThreads = nThreads;
         MatrixMaker.pathFolder = pathFolder;
         row_i = 0; ///> The i index for the matrix
-        column_j = 0; ///> The j index for the matrix
+        column_j = -1; ///> The j index for the matrix
         matrix = new MatrixContainer();
     }
 
@@ -48,14 +48,26 @@ public class MatrixMaker {
         return columnsIndices;
     }
 
-    private Map<Integer, String> getNPs(ArrayList<String> clauses) {
-        Map<Integer, String> npPosition = new LinkedHashMap<>();
+//    private Map<Integer, String> NPIndex2ColumnIndex()
 
+    private final LinkedHashMap<Integer, String> getNPs(ArrayList<String> clauses) {
+        LinkedHashMap<Integer, String> npPosition = new LinkedHashMap<>();
+        Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
-            if (clauses.get(i).contains("NP"))
-                npPosition.put(i + column_j, clauses.get(i));
-
+            if (clauses.get(i).contains("NP")) {
+                npPosition.put(i, clauses.get(i));
+            }
         return npPosition;
+    }
+
+    private final String getKinship(String constituency, int index) {
+
+        ArrayList<String> listConstituents = new ArrayList<>(Arrays.asList(constituency.split(",")));
+        index = listConstituents.size() - index;
+        String kinship = String.join("_", listConstituents.subList(index, listConstituents.size()));
+
+        return kinship;
+
     }
 
     private void makeMatrix(String pathFile) throws IOException, InvalidLengthsException {
@@ -189,8 +201,9 @@ public class MatrixMaker {
         Map<String, Integer> lMapTokenRow = new HashMap<>();
         ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
         Map<String, String> lpreClause;
-        ArrayList<Map<Integer, String>> lListNPposition;
-
+        ArrayList<LinkedHashMap<Integer, String>> lListNPposition;
+        ArrayList<Integer> lSetConstituencies;
+        ArrayList<String> lListTokensSeen;
         if (pages.get(0).equals(""))
             pages.remove(0);
 
@@ -201,16 +214,18 @@ public class MatrixMaker {
             sentences.remove(0);
 
             for (String s : sentences) {
-                ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n")));
-                String sentenceID = lines.get(0).trim();
+                ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n"))); ///> List of lines that compose each sentence
+                String sentenceID = lines.get(0).trim(); ///> We get the first line which is the sentence ID
                 System.out.println("\t\tsentence: " + sentenceID);
-                lines.remove(0);
-                Set<String> lClausesSeen = new HashSet<>();
-                ArrayList<String> lSubClausesSeen = new ArrayList<>();
-                lpreClause = new HashMap<>();
-                lListNPposition = new ArrayList<>();
+                lines.remove(0); ///> We remove the sentence ID from the list of lines
+                Set<String> lClausesSeen = new HashSet<>(); ///> List that contains which clauses (NP) are found during the iteration
+                lpreClause = new HashMap<>(); ///> Map that contains the subclauses and what prenodes compose them. NP_18:"DT_NN"
+                lListNPposition = new ArrayList<>(); ///> List that contains dictionaries containing the position of the NPs in each word constituency string [{1:NP_18}]
+                int tokenIdx = row_i; ///> Temporal index to create the dictionary token:i_index
+                lSetConstituencies = new ArrayList<>();
 
-                for (String l : lines) {
+                lListTokensSeen = new ArrayList<>();
+                for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
                     String token = splittedLine[0];
                     String lemma = splittedLine[1];
@@ -220,32 +235,29 @@ public class MatrixMaker {
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
 
-                    if (dependency.equals("PUNCT"))
+                    if (dependency.equals("PUNCT") || !constituency.contains("NP"))
                         continue;
                     /***
                      * 1. Get the token and store it in a dictionary string:int, with its row index as value:
                      *      {"the_DT":0, "car_NN":1, ...}
                      *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrix
                      */
-                    if (matrix.cMapTokenRow.containsKey(token_pos))
-                        matrix.cRows.add(matrix.cMapTokenRow.get(token_pos));
-                    else {
-                        matrix.cMapTokenRow.put(token_pos, row_i);
-                        matrix.cRows.add(row_i);
-                        row_i++;
-                    }
 
+                    if (!matrix.cMapTokenRow.containsKey(token_pos)) {
+                        matrix.cMapTokenRow.put(token_pos, tokenIdx);
+                        tokenIdx++;
+                    }
+                    lListTokensSeen.add(token_pos);
                     /**
                      * 2. Using the constituency results, we find all the NPs clauses contained in the phrase.
                      *      We discard, at the beginning, any other type of clause (VP, ADJP, PP, PRP, etc).
                      *
                      */
-                    if (!constituency.contains("NP"))
-                        continue;
 
                     ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
-                    Map<Integer, String> lNPposition = getNPs(clauses);
+                    LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
                     lListNPposition.add(lNPposition);
+
                     /**
                      * We get the preclauses of each of the NPs this token belongs to
                      */
@@ -255,7 +267,7 @@ public class MatrixMaker {
 
                         String clauseInitials = targetClause.split("_")[0];
                         lClausesSeen.add(clauseInitials);
-                        lSubClausesSeen.add(targetClause);
+                        lSetConstituencies.add(getKinship(constituency, index_j).hashCode() % 1000);
 
                         /**
                          * 2.1 We get the tags of what constitutes the targetClause. Such that:
@@ -266,8 +278,8 @@ public class MatrixMaker {
                          */
                         //TODO: I could store this preClause structure for later use.
                         String tempPreClause;
-                        if (clauses.size() >= level + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
-                            tempPreClause = clauses.get(clauses.size() - (level + 1));
+                        if (clauses.size() > index_j + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
+                            tempPreClause = clauses.get(index_j + 1).split("_")[0];
                         else
                             tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
 
@@ -279,7 +291,6 @@ public class MatrixMaker {
 
 
                     }
-
                 }// end of current line. Sentence is completely read.
                 /**
                  * 3. Once the complete pass over the sentence is done, we get what represents each column.
@@ -288,23 +299,44 @@ public class MatrixMaker {
                  */
                 if (lClausesSeen.isEmpty())
                     continue;
-
-                Map<String, ArrayList<Integer>> lSubClausesColumns = new DefaultDict<>();
-                for (Map<Integer, String> npPosition : lListNPposition) {
+                Map<Integer, Integer> temporalIndices = new HashMap<>();
+                DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
+                ArrayList<Integer> lConstituenciesSeen = new ArrayList<>();
+                int innerLoopIdx = 0;
+                int outerLoopIdx = 0;
+                for (Map<Integer, String> npPosition : lListNPposition) { ///> This is i, per word
                     for (Map.Entry<Integer, String> entry : npPosition.entrySet()) {
-                        int index_j = entry.getKey();
-                        String v = entry.getValue();
-                        for (String k2 : lpreClause.keySet()) {
-                            if (k2.equals(v)) {
-                                matrix.cSubClausesColumns.get(v).add(index_j);
-                                lSubClausesColumns.get(v).add(index_j);
-                            }
+                        int index_NP = entry.getKey();
+                        String subClause = entry.getValue();
+
+                        /// We deal with row (words) indices here
+                        String currentWord = lListTokensSeen.get(outerLoopIdx);
+                        int currentWordRow = matrix.cMapTokenRow.get(currentWord);
+                        matrix.cRows.add(currentWordRow); ///> We add the i index to the i vector if the ijv matrix
+
+                        /// Now we deal with column indices
+                        int tempIndex;
+                        //TODO: Aqui es donde debo cambiar el desmadre
+
+                        if (temporalIndices.containsKey(index_NP) && lConstituenciesSeen.contains(lSetConstituencies.get(innerLoopIdx)))
+                            tempIndex = temporalIndices.get(index_NP);
+                        else {
+                            column_j++;
+                            tempIndex = column_j;
                         }
+                        temporalIndices.put(index_NP, tempIndex);
+                        matrix.cCols.add(tempIndex);
+                        matrix.cSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
+                        lSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
+                        lConstituenciesSeen.add(lSetConstituencies.get(innerLoopIdx));
+                        innerLoopIdx++;
 
                     }
 
-                    }
-
+                    outerLoopIdx++;
+                }
+                if (this.matrix.cRows.size() != this.matrix.cCols.size())
+                    throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
                 for (String cl : lClausesSeen) {
                     for (Map.Entry<String, String> entry : lpreClause.entrySet()) {
                         String clause = entry.getKey();
@@ -313,7 +345,6 @@ public class MatrixMaker {
                     }
 
                 }
-                column_j++;
 
             }
         }
@@ -321,8 +352,6 @@ public class MatrixMaker {
 
 
     }
-
-
 
 
 //    public  void run() throws InterruptedException {

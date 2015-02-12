@@ -4,6 +4,7 @@ import com.company.stanfordwiki2sparsematrix.Utils.DefaultDict;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -22,7 +23,7 @@ public class MatrixContainer {
 
     //Labels containers
     public HashMap<Integer, String> indicesColumns; ///> Contains the col index and the type it corresponds to.
-    public DefaultDict<String, ArrayList<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
+    public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
     public HashMap<String, ArrayList<Integer>> clauseColumns; ///> Contains the rows'indices for each type of clause
     public Map<String, Integer> cMapTokenRow; ///> Contains the col index and the token it corresponds to.
     /**
@@ -44,8 +45,8 @@ public class MatrixContainer {
 
         cMapTokenRow = new HashMap<>();
         indicesColumns = new HashMap<>();
-        cClauseSubClauseColumns = new DefaultDict<String, DefaultDict<String, ArrayList<Integer>>>(DefaultDict.class);
-        cSubClausesColumns = new DefaultDict<>();
+        cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
+        cSubClausesColumns = new DefaultDict<>(HashSet.class);
         clauseColumns = new HashMap<>();
 
     }
@@ -54,7 +55,7 @@ public class MatrixContainer {
     public MatrixContainer(ArrayList<Integer> cRows, ArrayList<Integer> cCols, ArrayList<Integer> data,
                            DefaultDict<String, Integer> mapTokenRow, HashMap<Integer, String> indicesColumns,
                            DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns,
-                           DefaultDict<String, ArrayList<Integer>> cSubClausesColumns) {
+                           DefaultDict<String, HashSet<Integer>> cSubClausesColumns) {
         //Matrix information
         this.cRows = cRows;
         this.data = data;
