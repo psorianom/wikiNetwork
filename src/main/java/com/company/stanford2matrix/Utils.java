@@ -1,4 +1,4 @@
-package com.company.stanfordwiki2sparsematrix;
+package com.company.stanford2matrix;
 
 import java.io.BufferedReader;
 import java.io.File;

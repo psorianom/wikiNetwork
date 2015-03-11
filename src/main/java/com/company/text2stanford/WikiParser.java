@@ -23,8 +23,9 @@ public class WikiParser {
 
     public static void main(String[] args) throws InterruptedException {
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/wikidata";
-        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/sentences";
-        WikiParser myWiki = new WikiParser(data, 15);
+//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
+        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc";
+        WikiParser myWiki = new WikiParser(data, 8);
         myWiki.run();
 
 

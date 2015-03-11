@@ -1,4 +1,4 @@
-package com.company.stanfordwiki2sparsematrix;
+package com.company.stanford2matrix;
 
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.SparseMatrix;
@@ -6,7 +6,7 @@ import org.apache.mahout.math.SparseMatrix;
 import java.io.IOException;
 import java.util.*;
 
-import static com.company.stanfordwiki2sparsematrix.Utils.*;
+import static com.company.stanford2matrix.Utils.*;
 
 public class MatrixMaker {
     private static int nThreads;
@@ -462,7 +462,7 @@ public class MatrixMaker {
 //    }
 
     /**
-     * This function runs the stanfordwiki2sparsematrix conversion in a single thread
+     * This function runs the stanford2matrix conversion in a single thread
      */
     public void runSingle() throws IOException, InvalidLengthsException {
         long start = System.nanoTime();

@@ -1,6 +1,6 @@
-package com.company.stanfordwiki2sparsematrix;
+package com.company.stanford2matrix;
 
-import com.company.stanfordwiki2sparsematrix.Utils.DefaultDict;
+import com.company.stanford2matrix.Utils.DefaultDict;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -10,6 +10,8 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -100,8 +102,91 @@ public class ParserThread implements Runnable {
         return tokenTags;
     }
 
-    @Override
-    public void run() {
+    private void parseText(String pathFile) {
+        LineIterator it = null;
+        try {
+
+
+            File input = new File(pathFile);
+            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            FileWriter parsedOutput = new FileWriter(parsedFilePath);
+            BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
+            it = FileUtils.lineIterator(input, "UTF-8");
+            /// We remove the line numbers if any
+
+            bufferedOut.write("FILENAME " + input.getName() + nline);
+            bufferedOut.write(header + nline);
+            bufferedOut.write("%%#PAGE " + input.getName() + nline);
+
+
+            while (it.hasNext()) {
+                String lineFile = it.nextLine();
+                lineFile = lineFile.replaceAll("^[0-9]+", "");
+                // Parse the document with CoreNLP
+//                docText = "The collection is often a set of results of an experiment, or a set of results from a survey";
+                Annotation document = new Annotation(lineFile);
+                coreParser.annotate(document);
+                // Treat the result
+                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                int sentenceId = 0;
+                for (CoreMap sentence : sentences) {
+                    String line;
+                    sentenceId++;
+                    bufferedOut.write("%%#SEN " + Integer.toString(sentenceId) + nline);
+
+                    // this is the parse tree of the current sentence
+                    Tree tree = sentence.get(TreeAnnotation.class);
+                    HashMap<Integer, ArrayList> constituencyTokens = tokenConstituencies(tree.skipRoot());
+
+                    // this is the dependency graph of the current sentence
+                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                    HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+
+                    // traversing the words in the current sentence
+                    // a CoreLabel is a CoreMap with additional token-specific methods
+                    String head;
+                    String dependency;
+                    for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+
+                        // this is the text of the token
+                        String word = token.get(TextAnnotation.class);
+                        // this is the index of said token
+                        int wordIndex = token.get(IndexAnnotation.class);
+                        // this is the POS tag of the token
+                        String pos = token.get(PartOfSpeechAnnotation.class);
+                        // this is the  lemma of the token
+                        String lemma = token.get(LemmaAnnotation.class);
+                        // this is the constituency information of the token
+                        String constituency = String.join(",", constituencyTokens.get(wordIndex));
+                        // this is the constituency information of the token
+                        // the head first
+                        if (dependencyTokens.get(wordIndex) == null) {
+                            head = "0";
+                            dependency = "PUNCT";
+                        } else {
+                            head = (String) dependencyTokens.get(wordIndex).get("headIndex");
+                            // the relation (dependency label)
+                            dependency = (String) dependencyTokens.get(wordIndex).get("relation");
+                        }
+                        // create the line that will be written in the output
+                        line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
+                        bufferedOut.write(line);
+
+                    }
+
+                }
+            }
+
+            bufferedOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            LineIterator.closeQuietly(it);
+        }
+
+    }
+
+    private void parseWiki(String pathFile) {
         try {
 
             File input = new File(pathFile);
@@ -187,7 +272,11 @@ public class ParserThread implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    @Override
+    public void run() {
+        parseText(pathFile);
 
     }
 }
