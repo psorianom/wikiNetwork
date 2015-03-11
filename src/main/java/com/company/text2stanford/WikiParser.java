@@ -1,4 +1,4 @@
-package com.company.textwiki2stanfordwiki;
+package com.company.text2stanford;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 
@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.company.textwiki2stanfordwiki.Utils.listFiles;
+import static com.company.text2stanford.Utils.listFiles;
 
 public class WikiParser {
     private static int nThreads;

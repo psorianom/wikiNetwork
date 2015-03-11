@@ -1,4 +1,4 @@
-package com.company.textwiki2stanfordwiki;
+package com.company.text2stanford;
 
 import edu.stanford.nlp.ling.CoreAnnotations.*;
 import edu.stanford.nlp.ling.CoreLabel;

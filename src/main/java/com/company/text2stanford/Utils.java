@@ -1,4 +1,4 @@
-package com.company.textwiki2stanfordwiki;
+package com.company.text2stanford;
 
 import java.io.File;
 import java.util.ArrayList;
