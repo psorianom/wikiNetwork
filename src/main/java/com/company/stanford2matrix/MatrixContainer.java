@@ -22,13 +22,14 @@ public class MatrixContainer {
     public ArrayList<Integer> cData; ///> Contains the data
 
     //Intermediary containers and values
-    public Map<Integer, Integer> cNgramColIndex;
+    public Map<Integer, Integer> cNgramColVectorIndex;
+    public Map<Integer, Integer> cNPColVectorIndex;
     //Label containers
     public HashMap<Integer, String> indicesColumns; ///> Contains the col index and the type it corresponds to.
     public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
-    public HashMap<String, ArrayList<Integer>> clauseColumns; ///> Contains the rows'indices for each type of clause
     public Map<String, Integer> cTokenRow; ///> Contains the col index and the token it corresponds to.
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
+    public Map<String, Integer> cNPwordsHashColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
     /**
      * Contains the type of column there are (NP, VP, PRP, MODIF, ...) and the subtype, if present, ("DT_JJ_NN","DT_NN",etc).
      * Then the columns indices that correspond to each case. Something like {'NP':{"DT_NN":[1,2,3]}, ...}
@@ -49,16 +50,16 @@ public class MatrixContainer {
 
 
         //Intermediary structures and values
-        cNgramColIndex = new HashMap<>();
-
+        cNgramColVectorIndex = new HashMap<>();
+        cNPColVectorIndex = new HashMap<>();
 
         //Labels information
         cTokenRow = new HashMap<>();
         indicesColumns = new HashMap<>();
         cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cSubClausesColumns = new DefaultDict<>(HashSet.class);
-        clauseColumns = new HashMap<>();
         cPOSToken = new DefaultDict<>();
+        cNPwordsHashColumn = new HashMap<>();
         cNgramColumn = new HashMap();
 
     }
@@ -66,7 +67,7 @@ public class MatrixContainer {
 
     public MatrixContainer(ArrayList<Integer> cRows, ArrayList<Integer> cCols, ArrayList<Integer> data,
                            DefaultDict<String, Integer> mapTokenRow, HashMap<Integer, String> indicesColumns,
-                           Map<Integer, Integer> cNgramColIndex,
+                           Map<Integer, Integer> cNgramColVectorIndex,
                            DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns,
                            DefaultDict<String, HashSet<Integer>> cSubClausesColumns,
                            DefaultDict<String, ArrayList<Integer>> cPOSToken,
@@ -85,15 +86,6 @@ public class MatrixContainer {
         this.cNgramColumn = cNgramColumn;
     }
 
-    /**
-     * This function converts the columns labels into a single label separated with underscores.
-     *
-     * @return Column label info concatenated
-     */
-    public String infoToText() {
-
-        return "a";
-    }
 
     public int getNumberRows() {
         return this.cTokenRow.keySet().size();
@@ -114,7 +106,8 @@ public class MatrixContainer {
     }
 
     public float sparsity() {
-        return this.getNumberNonZeroElements() / ((float) this.getNumberRows() * this.getNumberColumns());
+        sparsity = this.getNumberNonZeroElements() / ((float) this.getNumberRows() * this.getNumberColumns());
+        return sparsity;
     }
 
 }

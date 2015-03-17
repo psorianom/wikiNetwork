@@ -24,7 +24,7 @@ public class WikiParser {
     public static void main(String[] args) throws InterruptedException {
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/wikidata";
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
-        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc";
+        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc/";
         WikiParser myWiki = new WikiParser(data, 8);
         myWiki.run();
 
@@ -40,7 +40,7 @@ public class WikiParser {
         for (String path : listPaths) {
             System.out.println("still working...");
             Runnable worker = new ParserThread(path, nlpPipe);
-            //worker will execute its "run" function
+            //worker will execute its "run" functionl
             executor.execute(worker);
         }
         // This will make the executor accept no new threads

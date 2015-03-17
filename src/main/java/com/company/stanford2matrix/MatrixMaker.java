@@ -27,8 +27,8 @@ public class MatrixMaker {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, InvalidLengthsException {
-//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/wikidata";
-        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/sentencedata";
+//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/wikidata";
+        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
         MatrixMaker myMaker = new MatrixMaker(dataPath, 15);
         myMaker.runSingle();
 
@@ -65,6 +65,51 @@ public class MatrixMaker {
         return npPosition;
     }
 
+    private final LinkedHashMap<Integer, String> getNPhash(ArrayList<String> clauses) {
+        LinkedHashMap<Integer, String> npHash = new LinkedHashMap<>();
+//        Collections.reverse(clauses);
+        for (int i = 0; i < clauses.size(); i++)
+            if (clauses.get(i).contains("NP")) {
+                ArrayList<String> sublisto = new ArrayList<>(clauses.subList(0, i + 1));
+                npHash.put(clauses.subList(0, i + 1).hashCode() % 1000, clauses.get(i));
+
+            }
+        return npHash;
+    }
+
+    /**
+     * Function that transforms a list of dict NPhash : NP, like so [{968:NP_18, -784:NP_20}, {...}, ...], one in the
+     * list per token found in the phrase. The output is a dict with the NPhash as keys and a list of tokenIds as values,
+     * it is like this: {897: [2,4,7,9], 345:[1,3,5], ...}
+     *
+     * @param NPhash
+     * @return
+     */
+    private OrderedDefaultDict<Integer, ArrayList<Integer>> hashNP2hashToken(ArrayList<LinkedHashMap<Integer, String>> NPhash) {
+        OrderedDefaultDict<Integer, ArrayList<Integer>> hashTokenId = new OrderedDefaultDict<>(ArrayList.class);
+
+        for (int i = 0; i < NPhash.size(); i++) {
+            for (Map.Entry<Integer, String> entry : NPhash.get(i).entrySet()) {
+                int hash = entry.getKey();
+//                String NPtype = entry.getValue();
+                hashTokenId.get(hash).add(i);
+            }
+
+        }
+
+        return hashTokenId;
+    }
+
+    private DefaultDict<String, HashSet<Integer>> hashNPs2NPcolumn(ArrayList<LinkedHashMap<Integer, String>> NPhash) {
+        DefaultDict<String, HashSet<Integer>> hashNPs = new DefaultDict<>(HashSet.class);
+
+        for (int i = 0; i < NPhash.size(); i++)
+            for (String np : NPhash.get(i).values())
+                hashNPs.get(np).add(i);
+
+        return hashNPs;
+    }
+
     private final Map<String, ArrayList<Integer>> computeNgrams(ArrayList<String> listTokens, int n) {
         /**
          * From a list of tokens, calculates its n ngrams and adds them to the matrix.
@@ -80,7 +125,7 @@ public class MatrixMaker {
 
             if (this.matrix.cNgramColumn.containsKey(ngram)) {
                 ngram_col = this.matrix.cNgramColumn.get(ngram);
-                int indexNgramCol = this.matrix.cNgramColIndex.get(ngram_col);
+                int indexNgramCol = this.matrix.cNgramColVectorIndex.get(ngram_col);
                 for (int ii = 0; ii < n; ii++)
                     this.matrix.cData.set(indexNgramCol + ii, this.matrix.cData.get(indexNgramCol + ii) + 1);
             } else {
@@ -90,7 +135,7 @@ public class MatrixMaker {
                 /// This here is to keep a dict ngram_col_index : column_position_index to easily and rapidly find the
                 /// corresponding position index for a given ngram column index. IOW, a dict that maps the ngram columns to
                 /// its corresponding index in the cColumns list.
-                matrix.cNgramColIndex.put(ngram_col, matrix.cCols.size());
+                matrix.cNgramColVectorIndex.put(ngram_col, matrix.cCols.size());
 
                 /// We add to the matrix ijv vectors the new values. We iterate from 0 to n to add the values to the
                 /// corresponding lines (words). So, a given trigram will have 1s in each of the three words that formed it.
@@ -147,7 +192,7 @@ public class MatrixMaker {
             for (String s : sentences) {
                 ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n")));
                 String sentenceID = lines.get(0).trim();
-                System.out.println("\t\tsentence: " + sentenceID);
+//                System.out.println("\t\tsentence: " + sentenceID);
                 lines.remove(0);
                 ArrayList<String> lClausesSeen = new ArrayList<>();
                 ArrayList<String> lSubClausesSeen = new ArrayList<>();
@@ -275,6 +320,7 @@ public class MatrixMaker {
         ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
         Map<String, String> lpreClause;
         ArrayList<LinkedHashMap<Integer, String>> lListNPposition;
+        ArrayList<LinkedHashMap<Integer, String>> lListHashNP;
         ArrayList<Integer> lListConstituencies;
         ArrayList<String> lListTokensPOSSeen;
         if (pages.get(0).equals(""))
@@ -289,13 +335,15 @@ public class MatrixMaker {
             for (String s : sentences) {
                 ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n"))); ///> List of lines that compose each sentence
                 String sentenceID = lines.get(0).trim(); ///> We get the first line which is the sentence ID
-                System.out.println("\t\tsentence: " + sentenceID);
+//                System.out.println("\t\tsentence: " + sentenceID);
                 lines.remove(0); ///> We remove the sentence ID from the list of lines
                 Set<String> lClausesSeen = new HashSet<>(); ///> List that contains which clauses (NP) are found during the iteration
                 lpreClause = new HashMap<>(); ///> Map that contains the subclauses and what prenodes compose them. NP_18:"DT_NN"
                 lListNPposition = new ArrayList<>(); ///> List that contains dictionaries containing the position of the NPs in each word constituency string [{1:NP_18}]
+                lListHashNP = new ArrayList<>();
                 lListConstituencies = new ArrayList<>();
                 lListTokensPOSSeen = new ArrayList<>();
+                Map<Integer, String> lHashNP = new HashMap<>();
                 for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
                     String token = splittedLine[0];
@@ -333,9 +381,16 @@ public class MatrixMaker {
                      */
 
                     ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
-                    LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
-                    lListNPposition.add(lNPposition);
 
+                    LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
+                    LinkedHashMap<Integer, String> lNPsHashes = getNPhash(clauses);
+                    /// Here we create a dict that maps NP hash to NP name: {-917:NP_18, 587:NP_20, ...}
+                    for (Map.Entry<Integer, String> e : lNPsHashes.entrySet())
+                        if (!lHashNP.containsKey(e.getKey()))
+                            lHashNP.put(e.getKey(), e.getValue());
+
+                    lListNPposition.add(lNPposition);
+                    lListHashNP.add(lNPsHashes);
                     /**
                      * We get the preclauses of each of the NPs this token belongs to
                      */
@@ -377,49 +432,96 @@ public class MatrixMaker {
                  */
                 if (lClausesSeen.isEmpty())
                     continue;
+                /// Convert the list of NP:Hash into a dict hah:token_id
 
-
-                Map<Integer, Integer> temporalIndices = new HashMap<>();
+                Map<Integer, ArrayList<Integer>> lHashTokenIds = hashNP2hashToken(lListHashNP);
                 DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
-                ArrayList<Integer> lConstituenciesSeen = new ArrayList<>();
-                int innerLoopIdx = 0;
-                int outerLoopIdx = 0;
-                for (Map<Integer, String> npPosition : lListNPposition) { ///> This is i, per word
-                    String currentWord = lListTokensPOSSeen.get(outerLoopIdx);
-                    int currentWordRow = matrix.cTokenRow.get(currentWord);
-                    for (Map.Entry<Integer, String> entry : npPosition.entrySet()) {
-                        int index_NP = entry.getKey();
-                        String subClause = entry.getValue();
 
-                        /// We deal with row (words) indices here
-                        matrix.cRows.add(currentWordRow); ///> We add the i index to the i vector of the ijv matrix
-                        matrix.cData.add(1); ///> We add one to the data matrix
-                        /// Now we deal with column indices
-                        int tempIndex = 0;
-                        /// Here I was under the impression that the index of the NP on the constituency list (2 in the case [NP_20, VP_70, S_61,..])
-                        /// was enough to identify if a word belonged to the same NP, and thus put the value in the corresponding matrix.
-                        /// I was wrong, the index of the NP may be the same and the NP may be a completely different one. So what else can
-                        /// assure that two NPs are the same? The ancestors. So if the ancestor has been seen  and the position (second part of the
-                        /// following if) then we can assure it is the same NP and thus corresponds to the same column,  no need to create a new
-                        /// column.
-                        /// If it is a seen before column, we get this seen column index
-                        if (temporalIndices.containsKey(index_NP) && lConstituenciesSeen.contains(lListConstituencies.get(innerLoopIdx)))
-                            tempIndex = temporalIndices.get(index_NP);
-                        else ///> if this is a new NP, we add a new column
-                            tempIndex = ++column_j;
-//                        System.out.println(column_j);
-                        temporalIndices.put(index_NP, tempIndex);
-                        matrix.cCols.add(tempIndex);
-                        matrix.cSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
-                        lSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
-                        lConstituenciesSeen.add(lListConstituencies.get(innerLoopIdx));
-                        innerLoopIdx++;
+                /**
+                 * Here we iterate for each different NP (different even if they are the same NP_18, NP_18, they still have different words)
+                 * We get the hash of the NP, we get the local indices of the words that build it. Then we get the real matrix indices
+                 * for these tokens. Then we check if we already stocked this NP with this same words. If yes, we update the values
+                 * of cData. If not, we add it to the seen
+                 */
+                int np_col;
+                for (Map.Entry<Integer, ArrayList<Integer>> entry : lHashTokenIds.entrySet()) { ///> This is per each type of NP i.e., for each NP hashcode
+                    int hashNP = entry.getKey();
+                    ArrayList<Integer> words = entry.getValue();///> List of local indices (not the matrix indices) that appear in this NP
+                    int n = words.size();
+                    ArrayList<Integer> wordIndices = new ArrayList<>();
+                    ArrayList<String> wordTokens = new ArrayList<>();
+                    for (int w = 0; w < n; w++) {
+                        wordIndices.add(matrix.cTokenRow.get(lListTokensPOSSeen.get(words.get(w))));
+                        wordTokens.add(lListTokensPOSSeen.get(words.get(w)));
                     }
-                    outerLoopIdx++;
-                }//Add NPs loop; i loop
+                    /// Here we create a hash id that will identify these particular words as well as the type of NP
+//                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
+                    String keyNP = lHashNP.get(hashNP) + wordTokens.toString();
+
+                    if (matrix.cNPwordsHashColumn.containsKey(keyNP)) {
+                        np_col = matrix.cNPwordsHashColumn.get(keyNP);
+                        int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
+                        /// Update values in cData
+                        for (int i = 0; i < n; i++)
+                            this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
+                    } else {
+                        matrix.cNPwordsHashColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
+                        np_col = column_j;
+
+                        matrix.cSubClausesColumns.get(lHashNP.get(hashNP)).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
+                        lSubClausesColumns.get(lHashNP.get(hashNP)).add(np_col); ///> Same as before, but local
+                        matrix.cNPColVectorIndex.put(np_col, matrix.cCols.size()); ///> Dict for fast vector index searching given a column value. answers: Where in the vector is this value??
+                        for (int j = 0; j < n; j++) {
+                            this.matrix.cRows.add(wordIndices.get(j));
+                            this.matrix.cCols.add(np_col);
+                            this.matrix.cData.add(1);
+                        }
+                    }
+
+                }
+//                System.out.println();
+
+//                Map<Integer, Integer> temporalIndices = new HashMap<>();
+//                DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
+//                ArrayList<Integer> lConstituenciesSeen = new ArrayList<>();
+//                int innerLoopIdx = 0;
+//                int outerLoopIdx = 0;
+//                for (Map<Integer, String> npPosition : lListNPposition) { ///> This is i, per word
+//                    String currentWord = lListTokensPOSSeen.get(outerLoopIdx);
+//                    int currentWordRow = matrix.cTokenRow.get(currentWord);
+//                    for (Map.Entry<Integer, String> entry : npPosition.entrySet()) { ///> This is j, per each NP the word i belongs to.
+//                        int index_NP = entry.getKey();
+//                        String subClause = entry.getValue();
+//
+//                        /// We deal with row (words) indices here
+//                        matrix.cRows.add(currentWordRow); ///> We add the i index to the i vector of the ijv matrix
+//                        matrix.cData.add(1); ///> We add one to the data matrix
+//                        /// Now we deal with column indices
+//                        int tempIndex;
+//                        /// Here I was under the impression that the index of the NP on the constituency list (2 in the case [NP_20, VP_70, S_61,..])
+//                        /// was enough to identify if a word belonged to the same NP, and thus put the value in the corresponding matrix.
+//                        /// I was wrong, the index of the NP may be the same and the NP may be a completely different one. So what else can
+//                        /// assure that two NPs are the same? The ancestors. So if the ancestor has been seen  and the position (second part of the
+//                        /// following if) then we can assure it is the same NP and thus corresponds to the same column,  no need to create a new
+//                        /// column.
+//                        /// If it is a seen before column, we get this seen column index
+//                        if (temporalIndices.containsKey(index_NP) && lConstituenciesSeen.contains(lListConstituencies.get(innerLoopIdx)))
+//                            tempIndex = temporalIndices.get(index_NP);
+//                        else ///> if this is a new NP, we add a new column
+//                            tempIndex = ++column_j;
+////                        System.out.println(column_j);
+//                        temporalIndices.put(index_NP, tempIndex);
+//                        matrix.cCols.add(tempIndex);
+//                        matrix.cSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
+//                        lSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
+//                        lConstituenciesSeen.add(lListConstituencies.get(innerLoopIdx));
+//                        innerLoopIdx++;
+//                    }
+//                    outerLoopIdx++;
+//                }//Add NPs loop; i loop
 
                 //Here we add the ngrams
-                computeNgrams(lListTokensPOSSeen, 3);
+//                computeNgrams(lListTokensPOSSeen, 3);
 
                 if (this.matrix.cRows.size() != this.matrix.cCols.size())
                     throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
@@ -495,7 +597,7 @@ public class MatrixMaker {
 //        System.out.printf("cols max: %d\n", Collections.max(this.matrix.cCols));
 
         //Create mahout SparseMatrix
-        Matrix myMatrix = makeMahoutSparseMatrix(matrix.cRows, matrix.cCols, matrix.cData);
+//        Matrix myMatrix = makeMahoutSparseMatrix(matrix.cRows, matrix.cCols, matrix.cData);
         System.out.println(stats);
         long time = System.nanoTime() - start;
         System.out.println("Finished all threads");
