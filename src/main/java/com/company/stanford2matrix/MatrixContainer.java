@@ -25,11 +25,10 @@ public class MatrixContainer {
     public Map<Integer, Integer> cNgramColVectorIndex;
     public Map<Integer, Integer> cNPColVectorIndex;
     //Label containers
-    public HashMap<Integer, String> indicesColumns; ///> Contains the col index and the type it corresponds to.
     public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
     public Map<String, Integer> cTokenRow; ///> Contains the col index and the token it corresponds to.
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
-    public Map<String, Integer> cNPwordsHashColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
+    public Map<String, Integer> cNPwordsColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
     /**
      * Contains the type of column there are (NP, VP, PRP, MODIF, ...) and the subtype, if present, ("DT_JJ_NN","DT_NN",etc).
      * Then the columns indices that correspond to each case. Something like {'NP':{"DT_NN":[1,2,3]}, ...}
@@ -38,6 +37,7 @@ public class MatrixContainer {
     public Map<String, Integer> cNgramColumn;
     private float sparsity;
     private int numColumns;
+
 
     /**
      * Simple constructor
@@ -53,13 +53,12 @@ public class MatrixContainer {
         cNgramColVectorIndex = new HashMap<>();
         cNPColVectorIndex = new HashMap<>();
 
-        //Labels information
-        cTokenRow = new HashMap<>();
-        indicesColumns = new HashMap<>();
-        cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
+        //Metadata information
         cSubClausesColumns = new DefaultDict<>(HashSet.class);
+        cTokenRow = new HashMap<>();
         cPOSToken = new DefaultDict<>();
-        cNPwordsHashColumn = new HashMap<>();
+        cNPwordsColumn = new HashMap<>();
+        cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cNgramColumn = new HashMap();
 
     }
@@ -79,7 +78,6 @@ public class MatrixContainer {
 
         //Labels information
         this.cTokenRow = mapTokenRow;
-        this.indicesColumns = indicesColumns;
         this.cClauseSubClauseColumns = cClauseSubClauseColumns;
         this.cSubClausesColumns = cSubClausesColumns;
         this.cPOSToken = cPOSToken;

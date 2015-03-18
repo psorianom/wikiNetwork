@@ -28,7 +28,8 @@ public class MatrixMaker {
 
     public static void main(String[] args) throws InterruptedException, IOException, InvalidLengthsException {
 //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/wikidata";
-        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
+//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
+        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc";
         MatrixMaker myMaker = new MatrixMaker(dataPath, 15);
         myMaker.runSingle();
 
@@ -70,7 +71,7 @@ public class MatrixMaker {
 //        Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
             if (clauses.get(i).contains("NP")) {
-                ArrayList<String> sublisto = new ArrayList<>(clauses.subList(0, i + 1));
+//                ArrayList<String> sublisto = new ArrayList<>(clauses.subList(0, i + 1));
                 npHash.put(clauses.subList(0, i + 1).hashCode() % 1000, clauses.get(i));
 
             }
@@ -100,15 +101,6 @@ public class MatrixMaker {
         return hashTokenId;
     }
 
-    private DefaultDict<String, HashSet<Integer>> hashNPs2NPcolumn(ArrayList<LinkedHashMap<Integer, String>> NPhash) {
-        DefaultDict<String, HashSet<Integer>> hashNPs = new DefaultDict<>(HashSet.class);
-
-        for (int i = 0; i < NPhash.size(); i++)
-            for (String np : NPhash.get(i).values())
-                hashNPs.get(np).add(i);
-
-        return hashNPs;
-    }
 
     private final Map<String, ArrayList<Integer>> computeNgrams(ArrayList<String> listTokens, int n) {
         /**
@@ -306,7 +298,7 @@ public class MatrixMaker {
 //            for (int col = 0; col < matrix.columnSize(); col++) {
 //                matrix.setQuick(row, col, values[row][col]);
 //            }
-        System.out.println("Done.");
+        System.out.println("Done.\n\n");
         System.out.println(matrix.getQuick(0, 0) * matrix.getQuick(2, 2));
         return matrix;
     }
@@ -316,7 +308,6 @@ public class MatrixMaker {
         String file = readFile(pathFile, true);
 
         ///DECLARATIONS
-        Map<String, Integer> lMapTokenRow = new HashMap<>();
         ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
         Map<String, String> lpreClause;
         ArrayList<LinkedHashMap<Integer, String>> lListNPposition;
@@ -457,15 +448,16 @@ public class MatrixMaker {
                     /// Here we create a hash id that will identify these particular words as well as the type of NP
 //                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
                     String keyNP = lHashNP.get(hashNP) + wordTokens.toString();
-
-                    if (matrix.cNPwordsHashColumn.containsKey(keyNP)) {
-                        np_col = matrix.cNPwordsHashColumn.get(keyNP);
+                    // If this NP type plus these specific tokens have been seen before, we update the cound (its value in the matrix)
+                    if (matrix.cNPwordsColumn.containsKey(keyNP)) {
+                        np_col = matrix.cNPwordsColumn.get(keyNP);
                         int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
                         /// Update values in cData
                         for (int i = 0; i < n; i++)
                             this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
-                    } else {
-                        matrix.cNPwordsHashColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
+
+                    } else { ///> Else, we create a new matrix
+                        matrix.cNPwordsColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                         np_col = column_j;
 
                         matrix.cSubClausesColumns.get(lHashNP.get(hashNP)).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
@@ -479,47 +471,6 @@ public class MatrixMaker {
                     }
 
                 }
-//                System.out.println();
-
-//                Map<Integer, Integer> temporalIndices = new HashMap<>();
-//                DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
-//                ArrayList<Integer> lConstituenciesSeen = new ArrayList<>();
-//                int innerLoopIdx = 0;
-//                int outerLoopIdx = 0;
-//                for (Map<Integer, String> npPosition : lListNPposition) { ///> This is i, per word
-//                    String currentWord = lListTokensPOSSeen.get(outerLoopIdx);
-//                    int currentWordRow = matrix.cTokenRow.get(currentWord);
-//                    for (Map.Entry<Integer, String> entry : npPosition.entrySet()) { ///> This is j, per each NP the word i belongs to.
-//                        int index_NP = entry.getKey();
-//                        String subClause = entry.getValue();
-//
-//                        /// We deal with row (words) indices here
-//                        matrix.cRows.add(currentWordRow); ///> We add the i index to the i vector of the ijv matrix
-//                        matrix.cData.add(1); ///> We add one to the data matrix
-//                        /// Now we deal with column indices
-//                        int tempIndex;
-//                        /// Here I was under the impression that the index of the NP on the constituency list (2 in the case [NP_20, VP_70, S_61,..])
-//                        /// was enough to identify if a word belonged to the same NP, and thus put the value in the corresponding matrix.
-//                        /// I was wrong, the index of the NP may be the same and the NP may be a completely different one. So what else can
-//                        /// assure that two NPs are the same? The ancestors. So if the ancestor has been seen  and the position (second part of the
-//                        /// following if) then we can assure it is the same NP and thus corresponds to the same column,  no need to create a new
-//                        /// column.
-//                        /// If it is a seen before column, we get this seen column index
-//                        if (temporalIndices.containsKey(index_NP) && lConstituenciesSeen.contains(lListConstituencies.get(innerLoopIdx)))
-//                            tempIndex = temporalIndices.get(index_NP);
-//                        else ///> if this is a new NP, we add a new column
-//                            tempIndex = ++column_j;
-////                        System.out.println(column_j);
-//                        temporalIndices.put(index_NP, tempIndex);
-//                        matrix.cCols.add(tempIndex);
-//                        matrix.cSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
-//                        lSubClausesColumns.get(subClause).add(temporalIndices.get(index_NP));
-//                        lConstituenciesSeen.add(lListConstituencies.get(innerLoopIdx));
-//                        innerLoopIdx++;
-//                    }
-//                    outerLoopIdx++;
-//                }//Add NPs loop; i loop
-
                 //Here we add the ngrams
 //                computeNgrams(lListTokensPOSSeen, 3);
 
@@ -542,38 +493,18 @@ public class MatrixMaker {
     }
 
 
-//    public  void run() throws InterruptedException {
-//        long start = System.nanoTime();
-//        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
-//        ArrayList<String> listPaths = listFiles(pathFolder, "txt");
-////        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
-//        for (String path : listPaths) {
-//            System.out.println("still working...");
-//            Runnable worker = new MatrixThread(path);
-//            //worker will execute its "run" function
-//            executor.execute(worker);
-//        }
-//        // This will make the executor accept no new threads
-//        // and finish all existing threads in the queue
-//        executor.shutdown();
-//        // Wait until all threads are finish
-//        executor.awaitTermination(10, TimeUnit.DAYS);
-//        long time = System.nanoTime() - start;
-//        System.out.println("Finished all threads");
-//        System.out.printf("Tasks took %.3f m to run%n", time/(60*1e9));
-//    }
-
     /**
      * This function runs the stanford2matrix conversion in a single thread
      */
     public void runSingle() throws IOException, InvalidLengthsException {
         long start = System.nanoTime();
-        ArrayList<String> listPaths = listFiles(pathFolder, "txt");
+        ArrayList<String> listPaths = listFiles(pathFolder, "parsed.txt");
 
         /* big loop with for each file of the wiki stanford-parsed files*/
         int idx = 1;
 
         ///> This loops goes file by file
+        listPaths = new ArrayList<>(listPaths.subList(0, 100)); ///>DEBUG sublist
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
             this.prepareMatrixNPs(path);
@@ -582,7 +513,7 @@ public class MatrixMaker {
         }
 
         if (this.matrix.cRows.size() != this.matrix.cCols.size())
-            throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
+            throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something was wrong...");
         ///>Print some matrix statistics
         String stats = String.format("Number of rows: %d\n" +
                         "Number of columns: %d\n" +
@@ -591,16 +522,14 @@ public class MatrixMaker {
                         "Sparsity: %f %%\n",
                 this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().size(), this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
+        ///> Save matrix to MatrixMarket Format
+//        saveMatrixMarketFormat(pathFolder + "/MMMatrix", this.matrix);
+        saveMetaData(pathFolder + "/metadata/", this.matrix);
 
-
-//        System.out.printf("rows max: %d\n", Collections.max(this.matrix.cRows));
-//        System.out.printf("cols max: %d\n", Collections.max(this.matrix.cCols));
-
-        //Create mahout SparseMatrix
 //        Matrix myMatrix = makeMahoutSparseMatrix(matrix.cRows, matrix.cCols, matrix.cData);
+
         System.out.println(stats);
         long time = System.nanoTime() - start;
-        System.out.println("Finished all threads");
         System.out.printf("Tasks took %.3f m to run%n", time / (60 * 1e9));
 
     }
