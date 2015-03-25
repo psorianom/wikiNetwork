@@ -38,6 +38,8 @@ public class Utils {
     }
 
     public static void saveMetaData(String pathMetaData, MatrixContainer matrix) throws IOException {
+        System.out.print("Saving matrix metadata as JSON...");
+
         Gson gson = new Gson();
         String cSubClausesColumnsJSON = gson.toJson(matrix.cSubClausesColumns);
         saveTextFile(pathMetaData + "cSubClausesColumns", cSubClausesColumnsJSON, ".json");
@@ -56,7 +58,7 @@ public class Utils {
 
         String cNgramColumnJSON = gson.toJson(matrix.cNgramColumn);
         saveTextFile(pathMetaData + "cNgramColumn", cNgramColumnJSON, ".json");
-
+        System.out.println("Done");
     }
 
     public final static void saveTextFile(String pathFile, String toSave, String extension) throws IOException {
@@ -71,7 +73,7 @@ public class Utils {
 
         File file = new File(pathMMatrix + ".mtx");
         file.createNewFile();
-        System.out.println(pathMMatrix);
+//        System.out.println(pathMMatrix);
         FileWriter writer = new FileWriter(file);
         System.out.print("\nWriting Matrix Market Format matrix... ");
         writer.write("%%MatrixMarket matrix coordinate real general\n%\n");

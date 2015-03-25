@@ -1,8 +1,5 @@
 package com.company.stanford2matrix;
 
-import org.apache.mahout.math.Matrix;
-import org.apache.mahout.math.SparseMatrix;
-
 import java.io.IOException;
 import java.util.*;
 
@@ -101,8 +98,50 @@ public class MatrixMaker {
         return hashTokenId;
     }
 
+    private final Map<String, ArrayList<Integer>> addDependenciesColumns(ArrayList<String> listTokens, int n) {
+        /**
+         * From a list of tokens, calculates its n ngrams and adds them to the matrix.
+         * It computes the ngrams and then updates the ijv vectors containing the matrix, according to
+         * the existence or not of the ngram in the matrix.
+         */
+        Map<String, ArrayList<Integer>> ngramIndices = new DefaultDict<>();
+        ArrayList<List<String>> nose = new ArrayList<>();
+        String ngram;
+        Integer ngram_col;
+        for (int i = 0; i < listTokens.size() - (n - 1); i++) {
+            ngram = String.join("__", listTokens.subList(i, i + n));
 
-    private final Map<String, ArrayList<Integer>> computeNgrams(ArrayList<String> listTokens, int n) {
+            if (this.matrix.cNgramColumn.containsKey(ngram)) {
+                ngram_col = this.matrix.cNgramColumn.get(ngram);
+                int indexNgramCol = this.matrix.cNgramColVectorIndex.get(ngram_col);
+                for (int ii = 0; ii < n; ii++)
+                    this.matrix.cData.set(indexNgramCol + ii, this.matrix.cData.get(indexNgramCol + ii) + 1);
+            } else {
+                this.matrix.cNgramColumn.put(ngram, ++column_j);
+                ngram_col = column_j;
+
+                /// This here is to keep a dict ngram_col_index : column_position_index to easily and rapidly find the
+                /// corresponding position index for a given ngram column index. IOW, a dict that maps the ngram columns to
+                /// its corresponding index in the cColumns list.
+                matrix.cNgramColVectorIndex.put(ngram_col, matrix.cCols.size());
+
+                /// We add to the matrix ijv vectors the new values. We iterate from 0 to n to add the values to the
+                /// corresponding lines (words). So, a given trigram will have 1s in each of the three words that formed it.
+                for (int j = i; j < i + n; j++) {
+                    this.matrix.cRows.add(this.matrix.cTokenRow.get(listTokens.get(j)));
+                    this.matrix.cCols.add(ngram_col);
+                    this.matrix.cData.add(1);
+                }
+            }
+
+
+        }
+
+
+        return ngramIndices;
+    }
+
+    private final Map<String, ArrayList<Integer>> addNgramsColumns(ArrayList<String> listTokens, int n) {
         /**
          * From a list of tokens, calculates its n ngrams and adds them to the matrix.
          * It computes the ngrams and then updates the ijv vectors containing the matrix, according to
@@ -287,21 +326,6 @@ public class MatrixMaker {
 
     }
 
-    private Matrix makeMahoutSparseMatrix(ArrayList<Integer> rows, ArrayList<Integer> columns, ArrayList<Integer> data) {
-        int numElements = rows.size();
-        Matrix matrix = new SparseMatrix(this.matrix.getNumberRows(), this.matrix.getNumberColumns());
-        System.out.print("\nCreating mahout SparseMatrix...");
-        for (int i = 0; i < numElements; i++)
-            matrix.setQuick(rows.get(i), columns.get(i), data.get(i));
-
-//        for (int row = 0; row < matrix.rowSize(); row++) {
-//            for (int col = 0; col < matrix.columnSize(); col++) {
-//                matrix.setQuick(row, col, values[row][col]);
-//            }
-        System.out.println("Done.\n\n");
-        System.out.println(matrix.getQuick(0, 0) * matrix.getQuick(2, 2));
-        return matrix;
-    }
 
 
     private void prepareMatrixNPs(String pathFile) throws IOException, InvalidLengthsException {
@@ -431,8 +455,8 @@ public class MatrixMaker {
                 /**
                  * Here we iterate for each different NP (different even if they are the same NP_18, NP_18, they still have different words)
                  * We get the hash of the NP, we get the local indices of the words that build it. Then we get the real matrix indices
-                 * for these tokens. Then we check if we already stocked this NP with this same words. If yes, we update the values
-                 * of cData. If not, we add it to the seen
+                 * for these tokens. Then we check if we already stocked this NP with these same words. If yes, we update the values
+                 * of cData. If not, we add it to cData and cRow and cCols
                  */
                 int np_col;
                 for (Map.Entry<Integer, ArrayList<Integer>> entry : lHashTokenIds.entrySet()) { ///> This is per each type of NP i.e., for each NP hashcode
@@ -471,8 +495,9 @@ public class MatrixMaker {
                     }
 
                 }
+
                 //Here we add the ngrams
-//                computeNgrams(lListTokensPOSSeen, 3);
+                addNgramsColumns(lListTokensPOSSeen, 3);
 
                 if (this.matrix.cRows.size() != this.matrix.cCols.size())
                     throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
@@ -504,7 +529,7 @@ public class MatrixMaker {
         int idx = 1;
 
         ///> This loops goes file by file
-        listPaths = new ArrayList<>(listPaths.subList(0, 100)); ///>DEBUG sublist
+//        listPaths = new ArrayList<>(listPaths.subList(0, 100)); ///>DEBUG sublist
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
             this.prepareMatrixNPs(path);
@@ -522,10 +547,12 @@ public class MatrixMaker {
                         "Sparsity: %f %%\n",
                 this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().size(), this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
-        ///> Save matrix to MatrixMarket Format
-//        saveMatrixMarketFormat(pathFolder + "/MMMatrix", this.matrix);
-        saveMetaData(pathFolder + "/metadata/", this.matrix);
 
+        ///> Save matrix to MatrixMarket Format
+        saveMatrixMarketFormat(pathFolder + "/MMMatrix", this.matrix);
+
+        ///> Save matrix metadata to JSON format
+        saveMetaData(pathFolder + "/metadata/", this.matrix);
 //        Matrix myMatrix = makeMahoutSparseMatrix(matrix.cRows, matrix.cCols, matrix.cData);
 
         System.out.println(stats);
