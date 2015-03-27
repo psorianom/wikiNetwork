@@ -6,17 +6,15 @@ import java.util.*;
 import static com.company.stanford2matrix.Utils.*;
 
 public class MatrixMaker {
-    private static int nThreads;
     private static String pathFolder;
     private static int column_j = 0;
     private static int row_i = 0; ///> The i index for the matrix
+    private static int maxSentenceSize = 40;
     //All this should not be part of the class... it should just have a MatrixContainer object
     private MatrixContainer matrix;
 
-
     //Constructor
-    MatrixMaker(String pathFolder, int nThreads) {
-        MatrixMaker.nThreads = nThreads;
+    MatrixMaker(String pathFolder) {
         MatrixMaker.pathFolder = pathFolder;
         row_i = 0; ///> The i index for the matrix
         column_j = -1; ///> The j index for the matrix
@@ -27,7 +25,7 @@ public class MatrixMaker {
 //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata";
 //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
         String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc";
-        MatrixMaker myMaker = new MatrixMaker(dataPath, 15);
+        MatrixMaker myMaker = new MatrixMaker(dataPath);
         myMaker.runSingle();
 
 
@@ -111,6 +109,7 @@ public class MatrixMaker {
                 String dependency = relation.get(0);
                 int headIndex = Integer.parseInt(relation.get(1));
                 dependencyName = dependency + "_of_" + listTokens.get(headIndex - 1); ///>Have to remove one cause listokens is 0 index based
+
                 if (this.matrix.cDependencyColumn.containsKey(dependencyName)) {
                     if (this.matrix.cWordDependencyDataVectorIndex.containsKey(word + dependencyName)) {
                         lDependencyDataIndex = this.matrix.cWordDependencyDataVectorIndex.get(word + dependencyName);
@@ -342,7 +341,8 @@ public class MatrixMaker {
             pages.remove(0);
 
         for (String p : pages) {
-            ArrayList<String> sentences = new ArrayList(Arrays.asList(p.split("%%#SEN ")));
+
+            ArrayList<String> sentences = new ArrayList(Arrays.asList(p.split("%%#SEN\t")));
             String pageTitle = sentences.get(0).trim();
             System.out.println("page: " + pageTitle);
             sentences.remove(0);
@@ -350,8 +350,12 @@ public class MatrixMaker {
             for (String s : sentences) {
                 ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n"))); ///> List of lines that compose each sentence
                 String sentenceID = lines.get(0).trim(); ///> We get the first line which is the sentence ID
+                int sentenceSize = Integer.parseInt(sentenceID.split("\t")[1]);
 //                System.out.println("\t\tsentence: " + sentenceID);
                 lines.remove(0); ///> We remove the sentence ID from the list of lines
+
+                if (sentenceSize > this.maxSentenceSize)
+                    continue;
                 Set<String> lClausesSeen = new HashSet<>(); ///> List that contains which clauses (NP) are found during the iteration
                 lpreClause = new HashMap<>(); ///> Map that contains the subclauses and what prenodes compose them. NP_18:"DT_NN"
                 lListNPposition = new ArrayList<>(); ///> List that contains dictionaries containing the position of the NPs in each word constituency string [{1:NP_18}]
