@@ -58,6 +58,10 @@ public class Utils {
 
         String cNgramColumnJSON = gson.toJson(matrix.cNgramColumn);
         saveTextFile(pathMetaData + "cNgramColumn", cNgramColumnJSON, ".json");
+
+        String cDependencyColumn = gson.toJson(matrix.cDependencyColumn);
+        saveTextFile(pathMetaData + "cDependencyColumn", cDependencyColumn, ".json");
+
         System.out.println("Done");
     }
 

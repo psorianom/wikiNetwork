@@ -24,9 +24,9 @@ public class MatrixMaker {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, InvalidLengthsException {
-//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/wikidata";
-//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
-        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc";
+//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata";
+//        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
+        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc";
         MatrixMaker myMaker = new MatrixMaker(dataPath, 15);
         myMaker.runSingle();
 
@@ -98,47 +98,45 @@ public class MatrixMaker {
         return hashTokenId;
     }
 
-    private final Map<String, ArrayList<Integer>> addDependenciesColumns(ArrayList<String> listTokens, int n) {
-        /**
-         * From a list of tokens, calculates its n ngrams and adds them to the matrix.
-         * It computes the ngrams and then updates the ijv vectors containing the matrix, according to
-         * the existence or not of the ngram in the matrix.
-         */
-        Map<String, ArrayList<Integer>> ngramIndices = new DefaultDict<>();
-        ArrayList<List<String>> nose = new ArrayList<>();
-        String ngram;
-        Integer ngram_col;
-        for (int i = 0; i < listTokens.size() - (n - 1); i++) {
-            ngram = String.join("__", listTokens.subList(i, i + n));
-
-            if (this.matrix.cNgramColumn.containsKey(ngram)) {
-                ngram_col = this.matrix.cNgramColumn.get(ngram);
-                int indexNgramCol = this.matrix.cNgramColVectorIndex.get(ngram_col);
-                for (int ii = 0; ii < n; ii++)
-                    this.matrix.cData.set(indexNgramCol + ii, this.matrix.cData.get(indexNgramCol + ii) + 1);
-            } else {
-                this.matrix.cNgramColumn.put(ngram, ++column_j);
-                ngram_col = column_j;
-
-                /// This here is to keep a dict ngram_col_index : column_position_index to easily and rapidly find the
-                /// corresponding position index for a given ngram column index. IOW, a dict that maps the ngram columns to
-                /// its corresponding index in the cColumns list.
-                matrix.cNgramColVectorIndex.put(ngram_col, matrix.cCols.size());
-
-                /// We add to the matrix ijv vectors the new values. We iterate from 0 to n to add the values to the
-                /// corresponding lines (words). So, a given trigram will have 1s in each of the three words that formed it.
-                for (int j = i; j < i + n; j++) {
-                    this.matrix.cRows.add(this.matrix.cTokenRow.get(listTokens.get(j)));
-                    this.matrix.cCols.add(ngram_col);
+    private final void addDependenciesColumns(ArrayList<String> listTokens,
+                                              Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
+        //TODO: I need a dict of list of lists, as this: {word1:[[dependency,headIndex],[...]], word2:[...], ...}
+        String dependencyName;
+        Integer dependencyNameCol;
+        int lDependencyDataIndex;
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : lDictDependencyHeadIndex.entrySet()) {
+            String word = entry.getKey();
+            ArrayList<ArrayList<String>> listRelations = entry.getValue();
+            for (ArrayList<String> relation : listRelations) {
+                String dependency = relation.get(0);
+                int headIndex = Integer.parseInt(relation.get(1));
+                dependencyName = dependency + "_of_" + listTokens.get(headIndex - 1); ///>Have to remove one cause listokens is 0 index based
+                if (this.matrix.cDependencyColumn.containsKey(dependencyName)) {
+                    if (this.matrix.cWordDependencyDataVectorIndex.containsKey(word + dependencyName)) {
+                        lDependencyDataIndex = this.matrix.cWordDependencyDataVectorIndex.get(word + dependencyName);
+//                    dependencyNameCol = this.matrix.cDependencyColumn.get(dependencyName);
+                        /// Get the index on the cData vector of the value that must be modified
+//                    lDependencyDataIndex = this.matrix.cDependencyColDataVectorIndex.get(dependencyNameCol);
+                        this.matrix.cData.set(lDependencyDataIndex, this.matrix.cData.get(lDependencyDataIndex) + 1);
+                    } else {
+                        dependencyNameCol = this.matrix.cDependencyColumn.get(dependencyName);
+                        this.matrix.cWordDependencyDataVectorIndex.put(word + dependencyName, matrix.cCols.size());
+                        this.matrix.cRows.add(this.matrix.cTokenRow.get(word));
+                        this.matrix.cCols.add(dependencyNameCol);
+                        this.matrix.cData.add(1);
+                    }
+                } else {
+                    this.matrix.cDependencyColumn.put(dependencyName, ++column_j);
+//                    this.matrix.cDependencyColDataVectorIndex.put(column_j, matrix.cCols.size());
+                    this.matrix.cWordDependencyDataVectorIndex.put(word + dependencyName, matrix.cCols.size());
+                    this.matrix.cRows.add(this.matrix.cTokenRow.get(word));
+                    this.matrix.cCols.add(column_j);
                     this.matrix.cData.add(1);
+
+
                 }
             }
-
-
         }
-
-
-        return ngramIndices;
     }
 
     private final Map<String, ArrayList<Integer>> addNgramsColumns(ArrayList<String> listTokens, int n) {
@@ -148,7 +146,6 @@ public class MatrixMaker {
          * the existence or not of the ngram in the matrix.
          */
         Map<String, ArrayList<Integer>> ngramIndices = new DefaultDict<>();
-        ArrayList<List<String>> nose = new ArrayList<>();
         String ngram;
         Integer ngram_col;
         for (int i = 0; i < listTokens.size() - (n - 1); i++) {
@@ -156,7 +153,7 @@ public class MatrixMaker {
 
             if (this.matrix.cNgramColumn.containsKey(ngram)) {
                 ngram_col = this.matrix.cNgramColumn.get(ngram);
-                int indexNgramCol = this.matrix.cNgramColVectorIndex.get(ngram_col);
+                int indexNgramCol = this.matrix.cNgramColDataVectorIndex.get(ngram_col);
                 for (int ii = 0; ii < n; ii++)
                     this.matrix.cData.set(indexNgramCol + ii, this.matrix.cData.get(indexNgramCol + ii) + 1);
             } else {
@@ -166,7 +163,7 @@ public class MatrixMaker {
                 /// This here is to keep a dict ngram_col_index : column_position_index to easily and rapidly find the
                 /// corresponding position index for a given ngram column index. IOW, a dict that maps the ngram columns to
                 /// its corresponding index in the cColumns list.
-                matrix.cNgramColVectorIndex.put(ngram_col, matrix.cCols.size());
+                matrix.cNgramColDataVectorIndex.put(ngram_col, matrix.cCols.size());
 
                 /// We add to the matrix ijv vectors the new values. We iterate from 0 to n to add the values to the
                 /// corresponding lines (words). So, a given trigram will have 1s in each of the three words that formed it.
@@ -338,6 +335,9 @@ public class MatrixMaker {
         ArrayList<LinkedHashMap<Integer, String>> lListHashNP;
         ArrayList<Integer> lListConstituencies;
         ArrayList<String> lListTokensPOSSeen;
+        ArrayList<String> lListAllTokensPOS;
+        Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex;
+
         if (pages.get(0).equals(""))
             pages.remove(0);
 
@@ -358,6 +358,8 @@ public class MatrixMaker {
                 lListHashNP = new ArrayList<>();
                 lListConstituencies = new ArrayList<>();
                 lListTokensPOSSeen = new ArrayList<>();
+                lListAllTokensPOS = new ArrayList<>();
+                lDictDependencyHeadIndex = new DefaultDict<>();
                 Map<Integer, String> lHashNP = new HashMap<>();
                 for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
@@ -369,10 +371,18 @@ public class MatrixMaker {
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
 
+                    lListAllTokensPOS.add(token_pos);
 
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
                     if (dependency.equals("PUNCT") || !constituency.contains("NP"))
                         continue;
+
+                    //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
+                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj")) {
+//                        lDictDependencyHeadIndex.get(token_pos).add(new HashMap<String, Integer>(){{put(dependency, Integer.parseInt(dependencyHead));}});
+                        lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
+                    }
+
                     /***
                      * 1. Get the token and store it in a dictionary string:int, with its row index as value:
                      *      {"the_DT":0, "car_NN":1, ...}
@@ -453,7 +463,8 @@ public class MatrixMaker {
                 DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
 
                 /**
-                 * Here we iterate for each different NP (different even if they are the same NP_18, NP_18, they still have different words)
+                 * Here we iterate for each different NP (different even if they are the same (NP_18 = NP_18), they are still made
+                 * up from different words)
                  * We get the hash of the NP, we get the local indices of the words that build it. Then we get the real matrix indices
                  * for these tokens. Then we check if we already stocked this NP with these same words. If yes, we update the values
                  * of cData. If not, we add it to cData and cRow and cCols
@@ -472,7 +483,7 @@ public class MatrixMaker {
                     /// Here we create a hash id that will identify these particular words as well as the type of NP
 //                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
                     String keyNP = lHashNP.get(hashNP) + wordTokens.toString();
-                    // If this NP type plus these specific tokens have been seen before, we update the cound (its value in the matrix)
+                    // If this NP type plus these specific tokens have been seen before, we update the count (its value in the matrix)
                     if (matrix.cNPwordsColumn.containsKey(keyNP)) {
                         np_col = matrix.cNPwordsColumn.get(keyNP);
                         int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
@@ -495,9 +506,10 @@ public class MatrixMaker {
                     }
 
                 }
-
+                //Here we add the dependencies
+                addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
                 //Here we add the ngrams
-                addNgramsColumns(lListTokensPOSSeen, 3);
+//                addNgramsColumns(lListTokensPOSSeen, 3);
 
                 if (this.matrix.cRows.size() != this.matrix.cCols.size())
                     throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");

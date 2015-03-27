@@ -22,7 +22,8 @@ public class MatrixContainer {
     public ArrayList<Integer> cData; ///> Contains the data
 
     //Intermediary containers and values
-    public Map<Integer, Integer> cNgramColVectorIndex;
+    public Map<Integer, Integer> cNgramColDataVectorIndex;
+    public Map<String, Integer> cWordDependencyDataVectorIndex; ///> Dictionary that maps words+dependency  to a cData index
     public Map<Integer, Integer> cNPColVectorIndex;
     //Label containers
     public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
@@ -35,6 +36,7 @@ public class MatrixContainer {
      */
     public DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns;
     public Map<String, Integer> cNgramColumn;
+    public Map<String, Integer> cDependencyColumn;
     private float sparsity;
     private int numColumns;
 
@@ -50,7 +52,8 @@ public class MatrixContainer {
 
 
         //Intermediary structures and values
-        cNgramColVectorIndex = new HashMap<>();
+        cNgramColDataVectorIndex = new HashMap<>();
+        cWordDependencyDataVectorIndex = new HashMap<>();
         cNPColVectorIndex = new HashMap<>();
 
         //Metadata information
@@ -60,13 +63,14 @@ public class MatrixContainer {
         cNPwordsColumn = new HashMap<>();
         cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cNgramColumn = new HashMap();
+        cDependencyColumn = new HashMap<>();
 
     }
 
 
     public MatrixContainer(ArrayList<Integer> cRows, ArrayList<Integer> cCols, ArrayList<Integer> data,
                            DefaultDict<String, Integer> mapTokenRow, HashMap<Integer, String> indicesColumns,
-                           Map<Integer, Integer> cNgramColVectorIndex,
+                           Map<Integer, Integer> cNgramColDataVectorIndex,
                            DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns,
                            DefaultDict<String, HashSet<Integer>> cSubClausesColumns,
                            DefaultDict<String, ArrayList<Integer>> cPOSToken,
