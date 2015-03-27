@@ -225,9 +225,12 @@ public class ParserThread implements Runnable {
                 List<CoreMap> sentences = document.get(SentencesAnnotation.class);
                 int sentenceId = 0;
                 for (CoreMap sentence : sentences) {
+                    List<CoreLabel> listTokens = new ArrayList<>();
+                    listTokens = sentence.get(TokensAnnotation.class);
+                    int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
-                    bufferedOut.write("%%#SEN " + Integer.toString(sentenceId) + nline);
+                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + "\t" + Integer.toString(sentenceSize) + nline);
 
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
@@ -241,7 +244,7 @@ public class ParserThread implements Runnable {
                     // a CoreLabel is a CoreMap with additional token-specific methods
                     String head;
                     String dependency;
-                    for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+                    for (CoreLabel token : listTokens) {
 
                         // this is the text of the token
                         String word = token.get(TextAnnotation.class);
@@ -371,7 +374,10 @@ public class ParserThread implements Runnable {
 
     @Override
     public void run() {
+        System.out.print("WORKING on " + pathFile);
         parseOANCText(pathFile);
+        System.out.println("... DONE");
 
     }
 }
+

@@ -18,13 +18,13 @@ public class WikiParser {
     WikiParser(String pathFolder, int nThreads) {
         WikiParser.nThreads = nThreads;
         WikiParser.pathFolder = pathFolder;
-        //"/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data"
     }
 
     public static void main(String[] args) throws InterruptedException {
-//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/wikidata";
-//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/sentencedata";
-        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/oanc/";
+        System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
+//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
+//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
+        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
         WikiParser myWiki = new WikiParser(data, 8);
         myWiki.run();
 
@@ -38,9 +38,9 @@ public class WikiParser {
         ArrayList<String> listPaths = listFiles(pathFolder);
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
         for (String path : listPaths) {
-            System.out.println("still working...");
+            System.out.println(path);
             Runnable worker = new ParserThread(path, nlpPipe);
-            //worker will execute its "run" functionl
+            //worker will execute its "run" function
             executor.execute(worker);
         }
         // This will make the executor accept no new threads

@@ -113,8 +113,8 @@ public class Utils {
             }
         }
         ArrayList<String> finalFilesPaths = new ArrayList<>();
-        //Filter files with extension ext and avoid hidden files (starting with .)
 
+        //Filter files with extension ext and avoid hidden files (starting with .)
         for (final String path : filesPaths) {
             String[] pathLevels = path.split("/");
             String fileName = pathLevels[pathLevels.length - 1];
