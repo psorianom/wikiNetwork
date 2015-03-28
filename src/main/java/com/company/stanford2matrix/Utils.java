@@ -37,10 +37,31 @@ public class Utils {
         return null;
     }
 
+
+    public static <V, K> Map<V, K> invertMapOfLists(Map<K, List<V>> map) {
+
+        Map<V, K> inv = new HashMap<V, K>();
+
+        for (Map.Entry<K, List<V>> entry : map.entrySet()) {
+            for (V listValue : entry.getValue()) {
+                K oldValue = inv.put(listValue, entry.getKey());
+                if (oldValue != null)
+                    throw new IllegalArgumentException("Map values must be unique");
+            }
+
+
+        }
+
+        return inv;
+    }
     public static void saveMetaData(String pathMetaData, MatrixContainer matrix) throws IOException {
         System.out.print("Saving matrix metadata as JSON...");
 
         Gson gson = new Gson();
+
+//        String cNPWordsColumn = gson.toJson(matrix.cNPwordsColumn);
+//        saveTextFile(pathMetaData + "cNPWordsColumn", cNPWordsColumn, ".json");
+
         String cSubClausesColumnsJSON = gson.toJson(matrix.cSubClausesColumns);
         saveTextFile(pathMetaData + "cSubClausesColumns", cSubClausesColumnsJSON, ".json");
 
@@ -61,6 +82,7 @@ public class Utils {
 
         String cDependencyColumn = gson.toJson(matrix.cDependencyColumn);
         saveTextFile(pathMetaData + "cDependencyColumn", cDependencyColumn, ".json");
+
 
         System.out.println("Done");
     }

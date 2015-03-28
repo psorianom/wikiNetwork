@@ -98,7 +98,6 @@ public class MatrixMaker {
 
     private final void addDependenciesColumns(ArrayList<String> listTokens,
                                               Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
-        //TODO: I need a dict of list of lists, as this: {word1:[[dependency,headIndex],[...]], word2:[...], ...}
         String dependencyName;
         Integer dependencyNameCol;
         int lDependencyDataIndex;
@@ -113,9 +112,7 @@ public class MatrixMaker {
                 if (this.matrix.cDependencyColumn.containsKey(dependencyName)) {
                     if (this.matrix.cWordDependencyDataVectorIndex.containsKey(word + dependencyName)) {
                         lDependencyDataIndex = this.matrix.cWordDependencyDataVectorIndex.get(word + dependencyName);
-//                    dependencyNameCol = this.matrix.cDependencyColumn.get(dependencyName);
                         /// Get the index on the cData vector of the value that must be modified
-//                    lDependencyDataIndex = this.matrix.cDependencyColDataVectorIndex.get(dependencyNameCol);
                         this.matrix.cData.set(lDependencyDataIndex, this.matrix.cData.get(lDependencyDataIndex) + 1);
                     } else {
                         dependencyNameCol = this.matrix.cDependencyColumn.get(dependencyName);
@@ -199,128 +196,6 @@ public class MatrixMaker {
 
     }
 
-    private void prepareMatrix(String pathFile) throws IOException, InvalidLengthsException {
-        String file = readFile(pathFile, true);
-
-        ///DECLARATIONS
-        int level = 1 + 1;
-        Map<String, Integer> lMapTokenRow = new HashMap<>();
-        Map<String, String> lpreClause;
-        ArrayList<String> pages = new ArrayList(Arrays.asList(file.split("%%#PAGE ")));
-        if (pages.get(0).equals(""))
-            pages.remove(0);
-
-        for (String p : pages) {
-            ArrayList<String> sentences = new ArrayList(Arrays.asList(p.split("%%#SEN ")));
-            String pageTitle = sentences.get(0).trim();
-            System.out.println("page: " + pageTitle);
-            sentences.remove(0);
-
-            for (String s : sentences) {
-                ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n")));
-                String sentenceID = lines.get(0).trim();
-//                System.out.println("\t\tsentence: " + sentenceID);
-                lines.remove(0);
-                ArrayList<String> lClausesSeen = new ArrayList<>();
-                ArrayList<String> lSubClausesSeen = new ArrayList<>();
-                lpreClause = new HashMap<>();
-                for (String l : lines) {
-                    String[] splittedLine = l.split("\t");
-                    String token = splittedLine[0];
-                    String lemma = splittedLine[1];
-                    String posTag = splittedLine[2];
-                    String constituency = splittedLine[3];
-                    String dependencyHead = splittedLine[4];
-                    String dependency = splittedLine[5];
-                    String token_pos = lemma + "_" + posTag;
-                    if (dependency.equals("PUNCT"))
-                        continue;
-                    /***
-                     * 1. Get the token and store it in a dictionary string:int, with its row index as value:
-                     *      {"the_DT":0, "car_NN":1, ...}
-                     *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrix
-                     */
-                    if (matrix.cTokenRow.containsKey(token_pos))
-                        matrix.cRows.add(matrix.cTokenRow.get(token_pos));
-                    else {
-                        matrix.cTokenRow.put(token_pos, row_i);
-                        matrix.cRows.add(row_i);
-                        row_i++;
-                    }
-
-                    /**
-                     * 2. Using the constituency results, we determine the clause level we are interested in (Level 1, 2,..).
-                     *      The level is taken from the constituency string, starting from left to right.
-                     *      The desired clause tag is stored in targetClause
-                     */
-                    ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
-                    if (level > clauses.size())
-                        level = clauses.size();
-                    String targetClause = clauses.get(clauses.size() - level);
-                    String clauseInitials = targetClause.split("_")[0];
-                    lClausesSeen.add(clauseInitials);
-                    lSubClausesSeen.add(targetClause);
-
-                    /**
-                     * 2.1 We get the tags of what constitutes the targetClause. Such that:
-                     * a dictionary str:str with clauseTarget as key and a key describing its components as values:
-                     * {"NP_18":"DET_NN_JJ', 'VP_70':'VBZ_NP',...}
-                     *
-                     *
-                     */
-                    //TODO: I could store this preClause structure for later use.
-                    String tempPreClause;
-                    if (clauses.size() >= level + 1) ///> There is actually a preClause identificator (e.g., a PRP for a NP)
-                        tempPreClause = clauses.get(clauses.size() - (level + 1));
-                    else
-                        tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
-
-                    if (lpreClause.containsKey(targetClause)) {
-                        if (!lpreClause.get(targetClause).contains(tempPreClause))
-                            lpreClause.put(targetClause, lpreClause.get(targetClause) + ":" + tempPreClause);
-                    } else
-                        lpreClause.put(targetClause, tempPreClause);
-
-
-                }// end of current line. Sentence is completely read.
-                /**
-                 * 3. Once the complete pass over the sentence is done, we get what represent each column.
-                 * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
-                 * the clauses, columns are the values: {"NP_18": [1,3,5,7], "VP_70":[2,4], ...}
-                 */
-                if (lClausesSeen.isEmpty())
-                    continue;
-                Map<String, ArrayList<Integer>> lSubClausesColumns = clauseToIndices(lSubClausesSeen);
-                for (Map.Entry<String, ArrayList<Integer>> entry : lSubClausesColumns.entrySet()) {
-                    String clause = entry.getKey();
-                    ArrayList value_j = entry.getValue();
-                    matrix.cSubClausesColumns.get(clause).addAll(value_j);
-                }
-
-                if (lSubClausesColumns.size() != lpreClause.size())
-                    throw new Utils.InvalidLengthsException("These lengths should be equal!!");
-
-                /**
-                 * 3.2 We get a dict str:dict<str:list<int>> to map for desired clause columns.
-                 * Such as this: {"NP":{"DET_NN_JJ":[1,3,5,7]}}
-                 */
-                Set<String> lSetClausesSeen = new HashSet<>(lClausesSeen);
-                for (String clause : lSetClausesSeen) {
-                    for (Map.Entry<String, String> entry : lpreClause.entrySet()) {
-                        String subClause = entry.getKey();
-                        String subClauseComponents = entry.getValue();
-                        if (subClause.contains(clause + "_"))
-                            matrix.cClauseSubClauseColumns.get(clause).get(subClauseComponents).addAll(lSubClausesColumns.get(subClause));
-                    }
-                }
-                column_j++;
-
-            }
-        }
-        System.out.println();
-
-
-    }
 
 
 
@@ -364,7 +239,7 @@ public class MatrixMaker {
                 lListTokensPOSSeen = new ArrayList<>();
                 lListAllTokensPOS = new ArrayList<>();
                 lDictDependencyHeadIndex = new DefaultDict<>();
-                Map<Integer, String> lHashNP = new HashMap<>();
+                Map<Integer, String> lNPHashNPName = new HashMap<>();
                 for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
                     String token = splittedLine[0];
@@ -415,8 +290,8 @@ public class MatrixMaker {
                     LinkedHashMap<Integer, String> lNPsHashes = getNPhash(clauses);
                     /// Here we create a dict that maps NP hash to NP name: {-917:NP_18, 587:NP_20, ...}
                     for (Map.Entry<Integer, String> e : lNPsHashes.entrySet())
-                        if (!lHashNP.containsKey(e.getKey()))
-                            lHashNP.put(e.getKey(), e.getValue());
+                        if (!lNPHashNPName.containsKey(e.getKey()))
+                            lNPHashNPName.put(e.getKey(), e.getValue());
 
                     lListNPposition.add(lNPposition);
                     lListHashNP.add(lNPsHashes);
@@ -433,14 +308,17 @@ public class MatrixMaker {
                         lListConstituencies.add(getKinship(constituency, index_j, true).hashCode() % 1000);
                         /**
                          * 2.1 We get the tags of what constitutes the targetClause. Such that:
-                         * a dictionary str:str with clauseTarget as key and a key describing its components as values:
-                         * {"NP_18":"DET_NN_JJ', 'VP_70':'VBZ_NP',...}
+                         * a dictionary str:str with NP_XX as key and a key describing its components as values:
+                         * {"NP_18":"DET_NN_JJ', 'NP_70':'NP_NN',...}
                          *
                          *
                          */
-                        //TODO: I could store this preClause structure for later use.
+                        //TODO: I could store this preClause structure for later use, as a MatrixContainer property
                         String tempPreClause;
-                        if (clauses.size() > index_j + 1) ///> There is actually a preClause identificator (e.g., a PRP or a NP)
+                        /// There is actually a preClause  (e.g., a PRP or a NP). This check has to do with the length of the
+                        /// constituencies string. If there are more elements, that indicates that there is another parent.
+                        /// if not, there is only the pos tag left.
+                        if (clauses.size() > index_j + 1)
                             tempPreClause = clauses.get(index_j + 1).split("_")[0];
                         else
                             tempPreClause = posTag; ///> There is no preClause. We take the POS tag.
@@ -461,8 +339,9 @@ public class MatrixMaker {
                  */
                 if (lClausesSeen.isEmpty())
                     continue;
-                /// Convert the list of NP:Hash into a dict hah:token_id
-
+                ///Converts lListHashNP (a list of dicts containing all the NPs hashchode (569) the words occur in as key
+                /// and  the NP name (NP_18) as value) into a dict with the NP hashcode as key and the token indices of thos tokens
+                /// that are aprt of said NP.
                 Map<Integer, ArrayList<Integer>> lHashTokenIds = hashNP2hashToken(lListHashNP);
                 DefaultDict<String, HashSet<Integer>> lSubClausesColumns = new DefaultDict<>(HashSet.class);
 
@@ -486,7 +365,7 @@ public class MatrixMaker {
                     }
                     /// Here we create a hash id that will identify these particular words as well as the type of NP
 //                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
-                    String keyNP = lHashNP.get(hashNP) + wordTokens.toString();
+                    String keyNP = lNPHashNPName.get(hashNP) + wordTokens.toString();
                     // If this NP type plus these specific tokens have been seen before, we update the count (its value in the matrix)
                     if (matrix.cNPwordsColumn.containsKey(keyNP)) {
                         np_col = matrix.cNPwordsColumn.get(keyNP);
@@ -495,12 +374,12 @@ public class MatrixMaker {
                         for (int i = 0; i < n; i++)
                             this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
 
-                    } else { ///> Else, we create a new matrix
+                    } else { ///> Else, we create a new matrix column
                         matrix.cNPwordsColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                         np_col = column_j;
 
-                        matrix.cSubClausesColumns.get(lHashNP.get(hashNP)).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
-                        lSubClausesColumns.get(lHashNP.get(hashNP)).add(np_col); ///> Same as before, but local
+                        matrix.cSubClausesColumns.get(lpreClause.get(lNPHashNPName.get(hashNP))).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
+                        lSubClausesColumns.get(lNPHashNPName.get(hashNP)).add(np_col); ///> Same as before, but local
                         matrix.cNPColVectorIndex.put(np_col, matrix.cCols.size()); ///> Dict for fast vector index searching given a column value. answers: Where in the vector is this value??
                         for (int j = 0; j < n; j++) {
                             this.matrix.cRows.add(wordIndices.get(j));
@@ -564,10 +443,13 @@ public class MatrixMaker {
                 this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().size(), this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
 
-        ///> Save matrix to MatrixMarket Format
-        saveMatrixMarketFormat(pathFolder + "/MMMatrix", this.matrix);
+        /// Save matrix to MatrixMarket Format
+        saveMatrixMarketFormat(pathFolder + "/matrix/MMMatrix", this.matrix);
 
-        ///> Save matrix metadata to JSON format
+        /// Invert the row and column metadata maps to have direct access to rows and columns
+
+
+        /// Save matrix metadata to JSON format
         saveMetaData(pathFolder + "/metadata/", this.matrix);
 //        Matrix myMatrix = makeMahoutSparseMatrix(matrix.cRows, matrix.cCols, matrix.cData);
 
