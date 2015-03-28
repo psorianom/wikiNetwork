@@ -25,9 +25,10 @@ public class MatrixContainer {
     public Map<Integer, Integer> cNgramColDataVectorIndex;
     public Map<String, Integer> cWordDependencyDataVectorIndex; ///> Dictionary that maps words+dependency  to a cData index
     public Map<Integer, Integer> cNPColVectorIndex;
+
     //Label containers
     public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
-    public Map<String, HashSet<Integer>> cColumnSubClause; ///> Contains the NP elements for each column
+    public Map<Integer, String> cColumnSubClause; ///> Contains the NP elements for each column
     public Map<String, Integer> cTokenRow; ///> Contains the token and the col index it corresponds to.
     public Map<Integer, String> cRowToken; ///> Contains the col index and the token it corresponds to.
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
@@ -39,6 +40,7 @@ public class MatrixContainer {
     public DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns;
     public Map<String, Integer> cNgramColumn;
     public Map<String, Integer> cDependencyColumn;
+    public Map<Integer, String> cColumnDependency;
     private float sparsity;
     private int numColumns;
 
@@ -67,6 +69,7 @@ public class MatrixContainer {
         cNPwordsColumn = new HashMap<>();
         cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cNgramColumn = new HashMap();
+        cColumnDependency = new HashMap<>();
         cDependencyColumn = new HashMap<>();
 
     }

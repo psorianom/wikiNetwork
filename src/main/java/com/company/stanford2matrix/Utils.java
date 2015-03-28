@@ -37,14 +37,13 @@ public class Utils {
         return null;
     }
 
+    public static Map<Integer, String> invertMapOfSets(DefaultDict<String, HashSet<Integer>> map) {
 
-    public static <V, K> Map<V, K> invertMapOfLists(Map<K, List<V>> map) {
+        Map<Integer, String> inv = new HashMap<>();
 
-        Map<V, K> inv = new HashMap<V, K>();
-
-        for (Map.Entry<K, List<V>> entry : map.entrySet()) {
-            for (V listValue : entry.getValue()) {
-                K oldValue = inv.put(listValue, entry.getKey());
+        for (Map.Entry<String, HashSet<Integer>> entry : map.entrySet()) {
+            for (int listValue : entry.getValue()) {
+                String oldValue = inv.put(listValue, entry.getKey());
                 if (oldValue != null)
                     throw new IllegalArgumentException("Map values must be unique");
             }
@@ -52,6 +51,18 @@ public class Utils {
 
         }
 
+        return inv;
+    }
+
+    public static <V, K> Map<V, K> invertMap(Map<K, V> map) {
+
+        Map<V, K> inv = new HashMap<V, K>();
+
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K oldValue = inv.put(entry.getValue(), entry.getKey());
+            if (oldValue != null)
+                throw new IllegalArgumentException("Map values must be unique");
+        }
         return inv;
     }
     public static void saveMetaData(String pathMetaData, MatrixContainer matrix) throws IOException {
@@ -82,6 +93,17 @@ public class Utils {
 
         String cDependencyColumn = gson.toJson(matrix.cDependencyColumn);
         saveTextFile(pathMetaData + "cDependencyColumn", cDependencyColumn, ".json");
+
+        /// Inverted index-es
+
+        String cRowToken = gson.toJson(matrix.cRowToken);
+        saveTextFile(pathMetaData + "cRowToken", cRowToken, ".json");
+
+        String cColumnSubClause = gson.toJson(matrix.cColumnSubClause);
+        saveTextFile(pathMetaData + "cColumnSubClause", cColumnSubClause, ".json");
+
+        String cColumnDependency = gson.toJson(matrix.cColumnDependency);
+        saveTextFile(pathMetaData + "cColumnDependency", cColumnDependency, ".json");
 
 
         System.out.println("Done");

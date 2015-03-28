@@ -123,7 +123,8 @@ public class MatrixMaker {
                     }
                 } else {
                     this.matrix.cDependencyColumn.put(dependencyName, ++column_j);
-//                    this.matrix.cDependencyColDataVectorIndex.put(column_j, matrix.cCols.size());
+                    /// Save the reverse index
+                    this.matrix.cColumnDependency.put(column_j, dependencyName);
                     this.matrix.cWordDependencyDataVectorIndex.put(word + dependencyName, matrix.cCols.size());
                     this.matrix.cRows.add(this.matrix.cTokenRow.get(word));
                     this.matrix.cCols.add(column_j);
@@ -271,6 +272,8 @@ public class MatrixMaker {
                     if (!matrix.cTokenRow.containsKey(token_pos)) {
                         ///>This is the dict with the pos_tag : row_index
                         matrix.cTokenRow.put(token_pos, row_i);
+                        /// Save inverted index
+                        matrix.cRowToken.put(row_i, token_pos);
                         matrix.cPOSToken.get(posTag).add(row_i);
                         row_i++;
 
@@ -447,7 +450,7 @@ public class MatrixMaker {
         saveMatrixMarketFormat(pathFolder + "/matrix/MMMatrix", this.matrix);
 
         /// Invert the row and column metadata maps to have direct access to rows and columns
-
+        this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);
 
         /// Save matrix metadata to JSON format
         saveMetaData(pathFolder + "/metadata/", this.matrix);
