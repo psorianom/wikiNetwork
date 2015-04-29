@@ -15,12 +15,10 @@ import org.apache.commons.io.LineIterator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -189,6 +187,92 @@ public class ParserThread implements Runnable {
 
     }
 
+    private void parseSemeval2007(String pathFile) {
+        try {
+
+            File input = new File(pathFile);
+            InputStream xmlFile = new FileInputStream(input);
+            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            FileWriter parsedOutput = new FileWriter(parsedFilePath);
+
+            BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
+            Document doc = Jsoup.parse(xmlFile, "UTF-8", "", Parser.xmlParser());
+
+            bufferedOut.write("FILENAME " + input.getName() + nline);
+            bufferedOut.write(header + nline);
+
+
+            //Foreach lexical element "lexelt"
+            Elements lexelts = doc.getElementsByTag("lexelt");
+            for (Element lx : lexelts) {
+                String lexeltName = lx.attr("item");
+                bufferedOut.write("%%#LEXELT " + lexeltName + nline);
+
+                Elements instances = lx.getElementsByTag("instance");
+                for (Element ins : instances) {
+                    String instanceName = ins.attr("id");
+                    bufferedOut.write("%%#INSTANCE " + instanceName + nline);
+                    String textToParse = ins.text();
+
+                    Annotation document = new Annotation(textToParse);
+                    coreParser.annotate(document);
+                    // Treat the result
+                    List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                    int sentenceId = 0;
+                    for (CoreMap sentence : sentences) {
+                        String line;
+                        sentenceId++;
+                        bufferedOut.write("%%#SEN " + Integer.toString(sentenceId) + nline);
+
+                        // this is the parse tree of the current sentence
+                        Tree tree = sentence.get(TreeAnnotation.class);
+                        HashMap<Integer, ArrayList> constituencyTokens = tokenConstituencies(tree.skipRoot());
+
+                        // this is the dependency graph of the current sentence
+                        SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                        HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+
+                        // traversing the words in the current sentence
+                        // a CoreLabel is a CoreMap with additional token-specific methods
+                        String head;
+                        String dependency;
+                        for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+
+                            // this is the string of the token
+                            String word = token.get(TextAnnotation.class);
+                            // this is the index of said token
+                            int wordIndex = token.get(IndexAnnotation.class);
+                            // this is the POS tag of the token
+                            String pos = token.get(PartOfSpeechAnnotation.class);
+                            // this is the  lemma of the token
+                            String lemma = token.get(LemmaAnnotation.class);
+                            // this is the constituency information of the token
+                            String constituency = String.join(",", constituencyTokens.get(wordIndex));
+                            // this is the constituency information of the token
+                            // the head first
+                            if (dependencyTokens.get(wordIndex) == null) {
+                                head = "0";
+                                dependency = "PUNCT";
+                            } else {
+                                head = (String) dependencyTokens.get(wordIndex).get("headIndex");
+                                // the relation (dependency label)
+                                dependency = (String) dependencyTokens.get(wordIndex).get("relation");
+                            }
+                            // create the line that will be written in the output
+                            line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
+                            bufferedOut.write(line);
+
+                        }
+
+                    }//foreach sentence
+                }//foreach instance
+            }//foreach lexelt
+            bufferedOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void parseOANCText(String pathFile) {
         LineIterator it = null;
         try {
@@ -303,7 +387,7 @@ public class ParserThread implements Runnable {
             Elements docs = doc.getElementsByTag("doc");
             for (Element c : docs) {
                 String docText = c.text();
-                docText = docText.replaceFirst(c.attr("title"), "");
+                docText = docText.replaceFirst(c.attr("title"), ""); ///> Remove the title from the content
                 bufferedOut.write("%%#PAGE " + c.attr("title") + nline);
 
 
@@ -362,10 +446,8 @@ public class ParserThread implements Runnable {
 
                     }
 
-                }
-
-
-            }
+                }//foreach sentence
+            }//foreach page
             bufferedOut.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -375,7 +457,8 @@ public class ParserThread implements Runnable {
     @Override
     public void run() {
         System.out.print("WORKING on " + pathFile);
-        parseOANCText(pathFile);
+//        parseOANCText(pathFile);
+        parseSemeval2007(pathFile);
         System.out.println("... DONE");
 
     }

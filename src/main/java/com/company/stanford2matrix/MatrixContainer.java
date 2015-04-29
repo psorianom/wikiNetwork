@@ -24,6 +24,7 @@ public class MatrixContainer {
     //Intermediary containers and values
     public Map<Integer, Integer> cNgramColDataVectorIndex;
     public Map<String, Integer> cWordDependencyDataVectorIndex; ///> Dictionary that maps words+dependency  to a cData index
+    public Map<Integer, Integer> cSentenceDataVectorIndex;
     public Map<Integer, Integer> cNPColVectorIndex;
 
     //Label containers
@@ -32,6 +33,7 @@ public class MatrixContainer {
     public Map<String, Integer> cTokenRow; ///> Contains the token and the col index it corresponds to.
     public Map<Integer, String> cRowToken; ///> Contains the col index and the token it corresponds to.
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
+    public Map<Integer, String> cTokenPOS; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
     public Map<String, Integer> cNPwordsColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
     /**
      * Contains the type of column there are (NP, VP, PRP, MODIF, ...) and the subtype, if present, ("DT_JJ_NN","DT_NN",etc).
@@ -41,6 +43,8 @@ public class MatrixContainer {
     public Map<String, Integer> cNgramColumn;
     public Map<String, Integer> cDependencyColumn;
     public Map<Integer, String> cColumnDependency;
+    public Map<Integer, Integer> cSentenceColumn;
+    public Map<Integer, Integer> cColumnSentence;
     private float sparsity;
     private int numColumns;
 
@@ -58,6 +62,7 @@ public class MatrixContainer {
         //Intermediary structures and values
         cNgramColDataVectorIndex = new HashMap<>();
         cWordDependencyDataVectorIndex = new HashMap<>();
+        cSentenceDataVectorIndex = new HashMap<>();
         cNPColVectorIndex = new HashMap<>();
 
         //Metadata information
@@ -66,11 +71,14 @@ public class MatrixContainer {
         cTokenRow = new HashMap<>();
         cRowToken = new HashMap<>();
         cPOSToken = new DefaultDict<>();
+        cTokenPOS = new HashMap<>();
         cNPwordsColumn = new HashMap<>();
         cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cNgramColumn = new HashMap();
         cColumnDependency = new HashMap<>();
         cDependencyColumn = new HashMap<>();
+        cSentenceColumn = new HashMap<>();
+        cColumnSentence = new HashMap<>();
 
     }
 

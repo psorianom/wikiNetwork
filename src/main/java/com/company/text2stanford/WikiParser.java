@@ -22,10 +22,9 @@ public class WikiParser {
 
     public static void main(String[] args) throws InterruptedException {
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
-//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
-//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
-        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/";
-        WikiParser myWiki = new WikiParser(data, 8);
+//        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
+        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/English_sense_induction.xml";
+        WikiParser myWiki = new WikiParser(dataPath, 8);
         myWiki.run();
 
 
@@ -34,13 +33,13 @@ public class WikiParser {
     public void run() throws InterruptedException {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject();
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
         ArrayList<String> listPaths = listFiles(pathFolder);
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
         for (String path : listPaths) {
             System.out.println(path);
             Runnable worker = new ParserThread(path, nlpPipe);
-            //worker will execute its "run" function
+            //worker will execute its "run()" function
             executor.execute(worker);
         }
         // This will make the executor accept no new threads

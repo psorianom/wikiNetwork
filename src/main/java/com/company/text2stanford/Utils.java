@@ -7,10 +7,16 @@ import java.util.ArrayList;
  * Created by pavel on 16/12/14.
  */
 public class Utils {
+
     public static ArrayList<String> listFiles(String pathFolder) {
         ArrayList<String> filesPaths = new ArrayList<>();
         final File folder = new File(pathFolder);
+        ArrayList<String> finalFilesPaths = new ArrayList<>();
 
+        if (folder.isFile()) {
+            finalFilesPaths.add(pathFolder);
+            return finalFilesPaths;
+        }
         for (final File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
                 filesPaths.addAll(listFiles(fileEntry.getPath()));
@@ -20,7 +26,6 @@ public class Utils {
 
             }
         }
-        ArrayList<String> finalFilesPaths = new ArrayList<>();
         for (final String path : filesPaths) {
             String[] pathLevels = path.split("/");
             String fileName = pathLevels[pathLevels.length - 1];

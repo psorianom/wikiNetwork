@@ -37,6 +37,23 @@ public class Utils {
         return null;
     }
 
+    public static Map<Integer, String> invertMapOfLists(DefaultDict<String, ArrayList<Integer>> map) {
+
+        Map<Integer, String> inv = new HashMap<>();
+
+        for (Map.Entry<String, ArrayList<Integer>> entry : map.entrySet()) {
+            for (int listValue : entry.getValue()) {
+                String oldValue = inv.put(listValue, entry.getKey());
+                if (oldValue != null)
+                    throw new IllegalArgumentException("Map values must be unique");
+            }
+
+
+        }
+
+        return inv;
+    }
+
     public static Map<Integer, String> invertMapOfSets(DefaultDict<String, HashSet<Integer>> map) {
 
         Map<Integer, String> inv = new HashMap<>();
@@ -94,16 +111,24 @@ public class Utils {
         String cDependencyColumn = gson.toJson(matrix.cDependencyColumn);
         saveTextFile(pathMetaData + "cDependencyColumn", cDependencyColumn, ".json");
 
-        /// Inverted index-es
+
+        /// Inverted maps
 
         String cRowToken = gson.toJson(matrix.cRowToken);
         saveTextFile(pathMetaData + "cRowToken", cRowToken, ".json");
+
+
+        String cTokenPOS = gson.toJson(matrix.cTokenPOS);
+        saveTextFile(pathMetaData + "cTokenPOS", cTokenPOS, ".json");
 
         String cColumnSubClause = gson.toJson(matrix.cColumnSubClause);
         saveTextFile(pathMetaData + "cColumnSubClause", cColumnSubClause, ".json");
 
         String cColumnDependency = gson.toJson(matrix.cColumnDependency);
         saveTextFile(pathMetaData + "cColumnDependency", cColumnDependency, ".json");
+
+        String cColumnSentence = gson.toJson(matrix.cColumnSentence);
+        saveTextFile(pathMetaData + "cColumnSentence", cColumnSentence, ".json");
 
 
         System.out.println("Done");
@@ -118,7 +143,7 @@ public class Utils {
     }
 
     public static boolean saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix) throws IOException {
-
+        System.out.println(pathMMatrix);
         File file = new File(pathMMatrix + ".mtx");
         file.createNewFile();
 //        System.out.println(pathMMatrix);
@@ -146,6 +171,12 @@ public class Utils {
     public static ArrayList<String> listFiles(String pathFolder, String ext) {
         ArrayList<String> filesPaths = new ArrayList<>();
         final File folder = new File(pathFolder);
+        ArrayList<String> finalFilesPaths = new ArrayList<>();
+
+        if (folder.isFile()) {
+            finalFilesPaths.add(pathFolder);
+            return finalFilesPaths;
+        }
 
         for (final File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
@@ -156,7 +187,6 @@ public class Utils {
 
             }
         }
-        ArrayList<String> finalFilesPaths = new ArrayList<>();
 
         //Filter files with extension ext and avoid hidden files (starting with .)
         for (final String path : filesPaths) {
