@@ -144,22 +144,28 @@ public class Utils {
 
     }
 
-    public static boolean saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix) throws IOException {
+    public static StringBuilder saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix) throws IOException {
         System.out.println(pathMMatrix);
+        /// Assign StringBuilder with roughly this number of chars: (Number of lines * avg_size_of_a_line) + chars_in_header
+        StringBuilder matrixData = new StringBuilder((matrix.getNumberNonZeroElements() * 15) + 72);
         File file = new File(pathMMatrix + ".mtx");
         file.createNewFile();
-//        System.out.println(pathMMatrix);
         FileWriter writer = new FileWriter(file);
+
         System.out.print("\nWriting Matrix Market Format matrix... ");
-        writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
-        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
+//        writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
+//        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
+        matrixData.append("%%MatrixMarket matrix coordinate real general\n%\n");
+        matrixData.append(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
+        for (int v = 0; v < matrix.getNumberNonZeroElements(); v++) {
+//            writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
+            matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
+        }
 
-        for (int v = 0; v < matrix.getNumberNonZeroElements(); v++)
-            writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
-
+        writer.write(matrixData.toString());
         writer.close();
         System.out.print("Done\n");
-        return true;
+        return matrixData;
     }
 
 
