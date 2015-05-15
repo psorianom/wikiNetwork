@@ -82,6 +82,8 @@ public class Utils {
         }
         return inv;
     }
+
+
     public static void saveMetaData(String pathMetaData, MatrixContainer matrix) throws IOException {
         System.out.print("Saving matrix metadata as JSON...");
 
@@ -151,6 +153,7 @@ public class Utils {
         System.out.print("\nWriting Matrix Market Format matrix... ");
         writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
         writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
+
         for (int v = 0; v < matrix.getNumberNonZeroElements(); v++)
             writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
 

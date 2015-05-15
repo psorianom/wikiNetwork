@@ -198,7 +198,7 @@ public class ParserThread implements Runnable {
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
             Document doc = Jsoup.parse(xmlFile, "UTF-8", "", Parser.xmlParser());
 
-            bufferedOut.write("FILENAME " + input.getName() + nline);
+            bufferedOut.write("FILENAME\t" + input.getName() + nline);
             bufferedOut.write(header + nline);
 
 
@@ -206,12 +206,12 @@ public class ParserThread implements Runnable {
             Elements lexelts = doc.getElementsByTag("lexelt");
             for (Element lx : lexelts) {
                 String lexeltName = lx.attr("item");
-                bufferedOut.write("%%#LEXELT " + lexeltName + nline);
+                bufferedOut.write("%%#LEXELT\t" + lexeltName + nline);
 
                 Elements instances = lx.getElementsByTag("instance");
                 for (Element ins : instances) {
                     String instanceName = ins.attr("id");
-                    bufferedOut.write("%%#INSTANCE " + instanceName + nline);
+                    bufferedOut.write("%%#INSTANCE\t" + instanceName + nline);
                     String textToParse = ins.text();
 
                     Annotation document = new Annotation(textToParse);
@@ -220,9 +220,12 @@ public class ParserThread implements Runnable {
                     List<CoreMap> sentences = document.get(SentencesAnnotation.class);
                     int sentenceId = 0;
                     for (CoreMap sentence : sentences) {
+
+                        List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
+                        int sentenceSize = listTokens.size();
                         String line;
                         sentenceId++;
-                        bufferedOut.write("%%#SEN " + Integer.toString(sentenceId) + nline);
+                        bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + nline);
 
                         // this is the parse tree of the current sentence
                         Tree tree = sentence.get(TreeAnnotation.class);
@@ -309,8 +312,7 @@ public class ParserThread implements Runnable {
                 List<CoreMap> sentences = document.get(SentencesAnnotation.class);
                 int sentenceId = 0;
                 for (CoreMap sentence : sentences) {
-                    List<CoreLabel> listTokens = new ArrayList<>();
-                    listTokens = sentence.get(TokensAnnotation.class);
+                    List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
                     int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
@@ -402,9 +404,11 @@ public class ParserThread implements Runnable {
                 List<CoreMap> sentences = document.get(SentencesAnnotation.class);
                 int sentenceId = 0;
                 for (CoreMap sentence : sentences) {
+                    List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
+                    int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
-                    bufferedOut.write("%%#SEN " + Integer.toString(sentenceId) + nline);
+                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + "\t" + Integer.toString(sentenceSize) + nline);
 
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);

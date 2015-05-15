@@ -26,6 +26,7 @@ public class MatrixContainer {
     public Map<String, Integer> cWordDependencyDataVectorIndex; ///> Dictionary that maps words+dependency  to a cData index
     public Map<Integer, Integer> cSentenceDataVectorIndex;
     public Map<Integer, Integer> cNPColVectorIndex;
+    public int sentenceID;
 
     //Label containers
     public DefaultDict<String, HashSet<Integer>> cSubClausesColumns; ///> Contains the rows'indices for each type of POS tag
@@ -44,7 +45,7 @@ public class MatrixContainer {
     public Map<String, Integer> cDependencyColumn;
     public Map<Integer, String> cColumnDependency;
     public Map<Integer, Integer> cSentenceColumn;
-    public Map<Integer, Integer> cColumnSentence;
+    public Map<Integer, String> cColumnSentence;
     private float sparsity;
     private int numColumns;
 
@@ -64,6 +65,7 @@ public class MatrixContainer {
         cWordDependencyDataVectorIndex = new HashMap<>();
         cSentenceDataVectorIndex = new HashMap<>();
         cNPColVectorIndex = new HashMap<>();
+        sentenceID = 0;
 
         //Metadata information
         cSubClausesColumns = new DefaultDict<>(HashSet.class);
@@ -83,25 +85,25 @@ public class MatrixContainer {
     }
 
 
-    public MatrixContainer(ArrayList<Integer> cRows, ArrayList<Integer> cCols, ArrayList<Integer> data,
-                           DefaultDict<String, Integer> mapTokenRow, HashMap<Integer, String> indicesColumns,
-                           Map<Integer, Integer> cNgramColDataVectorIndex,
-                           DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns,
-                           DefaultDict<String, HashSet<Integer>> cSubClausesColumns,
-                           DefaultDict<String, ArrayList<Integer>> cPOSToken,
-                           Map<String, Integer> cNgramColumn) {
-        //Matrix information
-        this.cRows = cRows;
-        this.cData = data;
-        this.cCols = cCols;
-
-        //Labels information
-        this.cTokenRow = mapTokenRow;
-        this.cClauseSubClauseColumns = cClauseSubClauseColumns;
-        this.cSubClausesColumns = cSubClausesColumns;
-        this.cPOSToken = cPOSToken;
-        this.cNgramColumn = cNgramColumn;
-    }
+//    public MatrixContainer(ArrayList<Integer> cRows, ArrayList<Integer> cCols, ArrayList<Integer> data,
+//                           DefaultDict<String, Integer> mapTokenRow, HashMap<Integer, String> indicesColumns,
+//                           Map<Integer, Integer> cNgramColDataVectorIndex,
+//                           DefaultDict<String, DefaultDict<String, ArrayList<Integer>>> cClauseSubClauseColumns,
+//                           DefaultDict<String, HashSet<Integer>> cSubClausesColumns,
+//                           DefaultDict<String, ArrayList<Integer>> cPOSToken,
+//                           Map<String, Integer> cNgramColumn) {
+//        //Matrix information
+//        this.cRows = cRows;
+//        this.cData = data;
+//        this.cCols = cCols;
+//
+//        //Labels information
+//        this.cTokenRow = mapTokenRow;
+//        this.cClauseSubClauseColumns = cClauseSubClauseColumns;
+//        this.cSubClausesColumns = cSubClausesColumns;
+//        this.cPOSToken = cPOSToken;
+//        this.cNgramColumn = cNgramColumn;
+//    }
 
 
     public int getNumberRows() {
