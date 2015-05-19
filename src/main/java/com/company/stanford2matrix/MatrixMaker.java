@@ -15,13 +15,6 @@ public class MatrixMaker {
     //All this should not be part of the class... it should just have a MatrixContainer object
     private MatrixContainer matrix;
     //Constructor
-    MatrixMaker(String pathFolder) {
-        MatrixMaker.pathFolder = pathFolder;
-        row_i = 0; ///> The i index for the matrix
-        column_j = -1; ///> The j index for the matrix
-        matrix = new MatrixContainer();
-    }
-
     MatrixMaker() {
         row_i = 1; ///> The i index for the matrix
         column_j = 0; ///> The j index for the matrix
@@ -30,7 +23,7 @@ public class MatrixMaker {
 
     public static void main(String[] args) throws InterruptedException, IOException, InvalidLengthsException {
         if (args.length == 0) {
-            System.out.println("Proper Usage is: java MatrixMaker what_to_parse.\n What_to_parse may be corpus OR semevalXXXX");
+            System.out.println("Proper Usage is: java MatrixMaker what_to_parse.\n What_to_parse may be corpus OR semeval_XXXX");
             System.exit(0);
         }
         String dataPath;
@@ -47,7 +40,7 @@ public class MatrixMaker {
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
             myMaker.runParseCorpus();
-        } else {
+        } else if (mode.equals("semeval_2007")) {
             dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/";
             myMaker.setDataPath(dataPath);
             myMaker.runParseSemeval2007();
@@ -293,8 +286,8 @@ public class MatrixMaker {
             for (String in : instances) {
                 this.matrix = new MatrixContainer();
 
-                row_i = 0; ///> The i index for the matrix
-                column_j = -1; ///> The j index for the matrix
+                row_i = 1; ///> The i index for the matrix
+                column_j = 0; ///> The j index for the matrix
 
                 //TODO: Change this "SEN " to "SEN\t", but first re-run the stanford2matrix parser with this modif.
                 ArrayList<String> sentences = new ArrayList(Arrays.asList(in.split("%%#SEN ")));
@@ -494,7 +487,12 @@ public class MatrixMaker {
                 this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);
                 this.matrix.cTokenPOS = invertMapOfLists(this.matrix.cPOSToken);
                 /// Save the market format matrix also
-
+//                this.matrix.cMarketFormatMatrix = saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix, false);
+                ///> Delete the row, cols and data arrays to save space. UPDATE: This is not a good idea. I can generate
+                /// the matrix faster with just the arrays.
+//                this.matrix.cRows.clear();
+//                this.matrix.cCols.clear();
+//                this.matrix.cData.clear();
                 lTargetWordInstancesMatrices.get(targetWord).put(instanceID, matrix);
             }//for each instance
             Gson gson = new Gson();
@@ -797,7 +795,7 @@ public class MatrixMaker {
                 this.matrix.sparsity());
 
         /// Create and save matrix to MatrixMarket Format
-        saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix);
+        saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix, true);
 
         /// Invert the row and column metadata maps to have direct access to rows and columns
         this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);

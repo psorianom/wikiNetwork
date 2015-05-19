@@ -144,14 +144,10 @@ public class Utils {
 
     }
 
-    public static StringBuilder saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix) throws IOException {
+    public static StringBuilder saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix, boolean writeToDisk) throws IOException {
         System.out.println(pathMMatrix);
         /// Assign StringBuilder with roughly this number of chars: (Number of lines * avg_size_of_a_line) + chars_in_header
         StringBuilder matrixData = new StringBuilder((matrix.getNumberNonZeroElements() * 15) + 72);
-        File file = new File(pathMMatrix + ".mtx");
-        file.createNewFile();
-        FileWriter writer = new FileWriter(file);
-
         System.out.print("\nWriting Matrix Market Format matrix... ");
 //        writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
 //        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
@@ -162,8 +158,13 @@ public class Utils {
             matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
         }
 
-        writer.write(matrixData.toString());
-        writer.close();
+        if (writeToDisk) {
+            File file = new File(pathMMatrix + ".mtx");
+            file.createNewFile();
+            FileWriter writer = new FileWriter(file);
+            writer.write(matrixData.toString());
+            writer.close();
+        }
         System.out.print("Done\n");
         return matrixData;
     }

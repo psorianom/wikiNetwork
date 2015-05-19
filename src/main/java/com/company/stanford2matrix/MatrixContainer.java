@@ -20,7 +20,7 @@ public class MatrixContainer {
     public ArrayList<Integer> cRows; ///> Contains row indices
     public ArrayList<Integer> cCols; ///> Contains columns indices
     public ArrayList<Integer> cData; ///> Contains the data
-
+    public StringBuilder cMarketFormatMatrix; ///> Contains a string holding the matrix in MMX format
     //Intermediary containers and values
     public Map<Integer, Integer> cNgramColDataVectorIndex;
     public Map<String, Integer> cWordDependencyDataVectorIndex; ///> Dictionary that maps words+dependency  to a cData index
@@ -58,7 +58,6 @@ public class MatrixContainer {
         cRows = new ArrayList<>();
         cData = new ArrayList<>();
         cCols = new ArrayList<>();
-
 
         //Intermediary structures and values
         cNgramColDataVectorIndex = new HashMap<>();
