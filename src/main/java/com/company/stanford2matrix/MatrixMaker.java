@@ -122,6 +122,8 @@ public class MatrixMaker {
 
     private final void addSentenceColumns(ArrayList<String> listTokens, int hashLength) {
 //        System.out.println(listTokens.hashCode());
+        Set<String> hashTokens = new HashSet<>(listTokens);
+        listTokens = new ArrayList<>(hashTokens);
         int hashcode;
         if (hashLength > 0)
             hashcode = listTokens.hashCode() % hashLength;
@@ -341,7 +343,7 @@ public class MatrixMaker {
                             ///>This is the dict with the pos_tag : row_index
                             matrix.cTokenRow.put(token_pos, row_i);
                             /// Save inverted index
-                            matrix.cRowToken.put(row_i, token);
+                            matrix.cRowToken.put(row_i, lemma);
                             matrix.cPOSToken.get(posTag).add(row_i);
                             row_i++;
 
@@ -465,6 +467,7 @@ public class MatrixMaker {
 
                     //Here we add the sentence columns
                     addSentenceColumns(lListTokensPOSSeen, 100000);//1865652
+
                     //Here we add the ngrams columns
                     //                addNgramsColumns(lListTokensPOSSeen, 3);
 
@@ -493,7 +496,8 @@ public class MatrixMaker {
 //                this.matrix.cRows.clear();
 //                this.matrix.cCols.clear();
 //                this.matrix.cData.clear();
-                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, matrix);
+//                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, new JSONGraphContainer(matrix));
+                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, this.matrix);
             }//for each instance
             Gson gson = new Gson();
             System.out.print("Saving " + targetWord + " JSON file...");
@@ -557,6 +561,7 @@ public class MatrixMaker {
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
 
+
                     lListAllTokensPOS.add(token_pos);
 
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
@@ -579,7 +584,7 @@ public class MatrixMaker {
                         ///>This is the dict with the pos_tag : row_index
                         matrix.cTokenRow.put(token_pos, row_i);
                         /// Save inverted index
-                        matrix.cRowToken.put(row_i, token);
+                        matrix.cRowToken.put(row_i, lemma);
                         matrix.cPOSToken.get(posTag).add(row_i);
                         row_i++;
 
@@ -778,10 +783,11 @@ public class MatrixMaker {
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
             this.prepareCorpiMatrixNPs(path);
-
             idx++;
             System.out.flush();
         }
+
+        /// Matrix creation done. We save it and display some stats
         System.out.println("\nNumber of parsed sentences: " + Integer.toString(numsent));
         if (this.matrix.cRows.size() != this.matrix.cCols.size())
             throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something was wrong...");

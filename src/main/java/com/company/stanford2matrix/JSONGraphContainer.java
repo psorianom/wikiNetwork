@@ -27,8 +27,6 @@ public class JSONGraphContainer {
         int numRows = matrix.cRows.size();
         Map<String, String> vertexTemporalMap = new HashMap<>();
         Map<String, Integer> edgeTemporalMap = new HashMap<>();
-        int currentRow;
-        int currentCol;
         int maxRows = Collections.max(matrix.cRows);
 
         /// Get the required maps to build the vertices dataframe
@@ -51,7 +49,7 @@ public class JSONGraphContainer {
             vertexTemporalMap.put("POS_tag", rowPOS.get(i));
             vertexTemporalMap.put("data", rowToken.get(i));
             /// Add them to the list
-            vertices.add(vertexTemporalMap);
+            vertices.add(new HashMap<>(vertexTemporalMap));
 
 
         }
@@ -63,7 +61,7 @@ public class JSONGraphContainer {
             vertexTemporalMap.put("POS_tag", "NA");
             vertexTemporalMap.put("data", columnsData.get(new_j).get(0));
             /// Add them to the list
-            vertices.add(vertexTemporalMap);
+            vertices.add(new HashMap<>(vertexTemporalMap));
 
         }
 
@@ -73,7 +71,7 @@ public class JSONGraphContainer {
             edgeTemporalMap.put("__dst_id", matrix.cCols.get(e) + maxRows);
             edgeTemporalMap.put("weight", matrix.cData.get(e));
 
-            edges.add(edgeTemporalMap);
+            edges.add(new HashMap<>(edgeTemporalMap));
         }
 
     }
