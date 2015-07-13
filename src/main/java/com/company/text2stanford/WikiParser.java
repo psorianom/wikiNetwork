@@ -1,6 +1,7 @@
 package com.company.text2stanford;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.apache.commons.cli.*;
 
 import java.util.ArrayList;
 import java.util.Properties;
@@ -12,6 +13,9 @@ import static com.company.text2stanford.Utils.listFiles;
 
 public class WikiParser {
     private static int nThreads;
+    //    private static int imput
+    private static String inputFolderPath;
+    private static String outputFolderPath;
 
     private static String pathFolder;
 
@@ -21,10 +25,32 @@ public class WikiParser {
     }
 
     public static void main(String[] args) throws InterruptedException {
+
+        CommandLineParser parser = new GnuParser();
+        Options options = new Options();
+        options.addOption("i", "input", true, "Input folder of extracted Wikipedia files");
+//        options.addOption("o", "output", true, "Output folder for parsed Wikipedia files");
+        String inputPath;
+
+        try {
+            CommandLine line = parser.parse(options, args);
+
+            if (line.hasOption("i")) {
+                inputFolderPath = line.getOptionValue("i");
+            } else
+            //We cant continue if this is not set
+            {
+                System.out.println("Please give an input folder");
+                return;
+            }
+        } catch (ParseException exp) {
+            System.err.println("Parsing failed.  Reason: " + exp.getMessage());
+            return;
+
+        }
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/English_sense_induction.xml";
-        WikiParser myWiki = new WikiParser(dataPath, 8);
+        WikiParser myWiki = new WikiParser(inputFolderPath, 8);
         myWiki.run();
 
 
@@ -33,11 +59,11 @@ public class WikiParser {
     public void run() throws InterruptedException {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject();
-        ArrayList<String> listPaths = listFiles(pathFolder);
+        ArrayList<String> listPaths = listFiles(inputFolderPath);
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
         for (String path : listPaths) {
-            System.out.println(path);
+//            System.out.println(path);
             Runnable worker = new ParserThread(path, nlpPipe);
             //worker will execute its "run()" function
             executor.execute(worker);
@@ -51,6 +77,7 @@ public class WikiParser {
         System.out.println("Finished all threads");
         System.out.printf("Tasks took %.3f m to run%n", time / (60 * 1e9));
     }
+
 
     public StanfordCoreNLP createCoreNLPObject() {
         Properties props = new Properties();

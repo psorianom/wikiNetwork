@@ -11,7 +11,9 @@ public class MatrixMaker {
     private static String pathFolder;
     private static int column_j = 0;
     private static int row_i = 0; ///> The i index for the matrix
-    public int numsent = 0;
+    public int numSent = 0;
+    ArrayList<String> listAllTokens = new ArrayList<>();
+    ArrayList<Integer> averageLengthSentence = new ArrayList<>();
     //All this should not be part of the class... it should just have a MatrixContainer object
     private MatrixContainer matrix;
     //Constructor
@@ -34,12 +36,12 @@ public class MatrixMaker {
             dataPath = args[1];
 
         else if (mode.equals("corpus")) {
-            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-            //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata";
+//            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
+            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
-            myMaker.runParseCorpus();
+            myMaker.runParseCorpus(false);
         } else if (mode.equals("semeval_2007")) {
             dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/";
             myMaker.setDataPath(dataPath);
@@ -132,7 +134,7 @@ public class MatrixMaker {
             hashcode = this.matrix.sentenceID;
             this.matrix.sentenceID++;
         }
-        int lSentenceDataIndex = 0;
+        int lSentenceDataIndex;
         int ngram_col;
         if (matrix.cSentenceColumn.containsKey(hashcode)) {
             ngram_col = matrix.cSentenceColumn.get(hashcode);
@@ -507,7 +509,7 @@ public class MatrixMaker {
         }// for each targetword
     }
 
-    private void prepareCorpiMatrixNPs(String pathFile) throws IOException, InvalidLengthsException {
+    private void prepareCorpiMatrixNPs(String pathFile, boolean removeLongSentences, boolean onlyStatistics) throws IOException, InvalidLengthsException {
         String file = readFile(pathFile, true);
 
         ///DECLARATIONS
@@ -531,7 +533,7 @@ public class MatrixMaker {
             sentences.remove(0);
 
             for (String s : sentences) {
-                numsent++;
+                numSent++;
 
                 ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n"))); ///> List of lines that compose each sentence
                 String sentenceID = lines.get(0).trim(); ///> We get the first line which is the sentence ID
@@ -540,8 +542,10 @@ public class MatrixMaker {
                 lines.remove(0); ///> We remove the sentence ID from the list of lines
 
                 int maxSentenceSize = 40;
-                if (sentenceSize > maxSentenceSize)
+                if (removeLongSentences & sentenceSize > maxSentenceSize)
                     continue;
+
+//                Sentence short enough, we continue
                 Set<String> lClausesSeen = new HashSet<>(); ///> List that contains which clauses (NP) are found during the iteration
                 lpreClause = new HashMap<>(); ///> Map that contains the subclauses and what prenodes compose them. NP_18:"DT_NN"
                 lListNPposition = new ArrayList<>(); ///> List that contains dictionaries containing the position of the NPs in each word constituency string [{1:NP_18}]
@@ -551,6 +555,7 @@ public class MatrixMaker {
                 lListAllTokensPOS = new ArrayList<>();
                 lDictDependencyHeadIndex = new DefaultDict<>();
                 Map<Integer, String> lNPHashNPName = new HashMap<>();
+                averageLengthSentence.add(lines.size());
                 for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
                     String token = splittedLine[0];
@@ -560,10 +565,11 @@ public class MatrixMaker {
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
-
+                    listAllTokens.add(token);
 
                     lListAllTokensPOS.add(token_pos);
-
+                    if (onlyStatistics)
+                        continue;
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
                     if (dependency.equals("PUNCT") || !constituency.contains("NP"))
                         continue;
@@ -645,7 +651,7 @@ public class MatrixMaker {
 
 
                     }
-                }// end of current line. Sentence is completely read.
+                }// end of current line (each line is a token!). Sentence is completely read.
                 /**
                  * 3. Once the complete pass over the sentence is done, we get what represents each column.
                  * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
@@ -707,7 +713,7 @@ public class MatrixMaker {
                 addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                 //Here we add the sentence columns
-                addSentenceColumns(lListTokensPOSSeen, 100000);
+                addSentenceColumns(lListTokensPOSSeen, 0);
 //                addSentenceColumns(lListTokensPOSSeen, (int) Math.pow(2,8));//with sentences: 2349022 // without sentences: 1865652 // difference: 483k
                 //Here we add the ngrams columns
 //                addNgramsColumns(lListTokensPOSSeen, 3);
@@ -771,9 +777,9 @@ public class MatrixMaker {
         System.out.printf("Tasks took %.3f m to run%n", time / (60 * 1e9));
     }
 
-    public void runParseCorpus() throws IOException, InvalidLengthsException {
+    public void runParseCorpus(boolean saveMatrix) throws IOException, InvalidLengthsException {
         long start = System.nanoTime();
-        ArrayList<String> listPaths = listFiles(pathFolder, "parsed.txt");
+        ArrayList<String> listPaths = listFiles(pathFolder, "parsed");
 
         /* big loop with for each file of the wiki stanford-parsed files*/
         int idx = 1;
@@ -782,13 +788,20 @@ public class MatrixMaker {
 //        listPaths = new ArrayList<>(listPaths.subList(0, 100)); ///>DEBUG sublist
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
-            this.prepareCorpiMatrixNPs(path);
+            ///> This is the function that actually parses the wiki Stanford parse into a graph
+            this.prepareCorpiMatrixNPs(path, false, true);
             idx++;
             System.out.flush();
         }
+        HashSet<String> typesSet = new HashSet<>(listAllTokens);
 
+        System.out.println("Parse statistics:\n");
+        System.out.println("\tNumber of parsed sentences: " + Integer.toString(numSent));
+        System.out.println("\tNumber of tokens: " + Integer.toString(listAllTokens.size()));
+        System.out.println("\tNumber of types: " + Integer.toString(typesSet.size()));
+        System.out.println("\tAverage number of tokens per sentence: " + Double.toString(average(averageLengthSentence)));
         /// Matrix creation done. We save it and display some stats
-        System.out.println("\nNumber of parsed sentences: " + Integer.toString(numsent));
+
         if (this.matrix.cRows.size() != this.matrix.cCols.size())
             throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something was wrong...");
         ///>Print some matrix statistics
@@ -800,16 +813,18 @@ public class MatrixMaker {
                 this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().size(), this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
 
-        /// Create and save matrix to MatrixMarket Format
-        saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix, true);
 
         /// Invert the row and column metadata maps to have direct access to rows and columns
         this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);
         this.matrix.cTokenPOS = invertMapOfLists(this.matrix.cPOSToken);
 
-        /// Save matrix metadata to JSON format
-        saveMetaData(pathFolder + "/../metadata/", this.matrix);
+        if (saveMatrix) {
+            /// Create and save matrix to MatrixMarket Format
+            saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix, true);
 
+            /// Save matrix metadata to JSON format
+            saveMetaData(pathFolder + "/../metadata/", this.matrix);
+        }
         System.out.println();
         System.out.println(stats);
         long time = System.nanoTime() - start;

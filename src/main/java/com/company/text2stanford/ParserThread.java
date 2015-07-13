@@ -107,7 +107,7 @@ public class ParserThread implements Runnable {
 
 
             File input = new File(pathFile);
-            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
             it = FileUtils.lineIterator(input, "UTF-8");
@@ -192,7 +192,7 @@ public class ParserThread implements Runnable {
 
             File input = new File(pathFile);
             InputStream xmlFile = new FileInputStream(input);
-            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
 
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
@@ -282,7 +282,7 @@ public class ParserThread implements Runnable {
 
 
             File input = new File(pathFile);
-            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
             it = FileUtils.lineIterator(input, "UTF-8");
@@ -375,7 +375,7 @@ public class ParserThread implements Runnable {
 
             File input = new File(pathFile);
 
-            String parsedFilePath = input.getCanonicalPath() + ".parsed.txt";
+            String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
 
@@ -397,7 +397,8 @@ public class ParserThread implements Runnable {
                 HashMap<String, String> anchorMap = getAnchors(c.getElementsByTag("a"));
 
                 // Parse the document with CoreNLP
-//                docText = "The collection is often a set of results of an experiment, or a set of results from a survey";
+//                docText = "A great brigand becomes a ruler of a Nation";
+
                 Annotation document = new Annotation(docText);
                 coreParser.annotate(document);
                 // Treat the result
@@ -412,6 +413,7 @@ public class ParserThread implements Runnable {
 
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
+//                    String pennString = tree.pennString();
                     HashMap<Integer, ArrayList> constituencyTokens = tokenConstituencies(tree.skipRoot());
 
                     // this is the dependency graph of the current sentence
@@ -460,9 +462,10 @@ public class ParserThread implements Runnable {
 
     @Override
     public void run() {
-        System.out.print("WORKING on " + pathFile);
+        System.out.print("WORKING on " + pathFile + "\n");
+        parseWiki(pathFile);
 //        parseOANCText(pathFile);
-        parseSemeval2007(pathFile);
+//        parseSemeval2007(pathFile);
         System.out.println("... DONE");
 
     }
