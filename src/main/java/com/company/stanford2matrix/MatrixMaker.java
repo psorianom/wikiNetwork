@@ -37,7 +37,8 @@ public class MatrixMaker {
 
         else if (mode.equals("corpus")) {
 //            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
+            dataPath = "/media/stuff/temp/extracted/";
+//            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
