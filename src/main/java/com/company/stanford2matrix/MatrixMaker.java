@@ -37,8 +37,10 @@ public class MatrixMaker {
 
         else if (mode.equals("corpus")) {
 //            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-            dataPath = "/home_nfs/eric/esorianomorales/wikitest/extracted";
+//            dataPath = "/home_nfs/eric/esorianomorales/wikitest/extracted/BL";
+            dataPath = "/media/stuff/temp/extracted/BL";
 //            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
+
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
@@ -562,6 +564,9 @@ public class MatrixMaker {
                     String token = splittedLine[0];
                     String lemma = splittedLine[1];
                     String posTag = splittedLine[2];
+                    System.out.println("\t " + l);
+//                    if (splittedLine.length < 4)
+//                        System.out.println("No mamar");
                     String constituency = splittedLine[3];
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];

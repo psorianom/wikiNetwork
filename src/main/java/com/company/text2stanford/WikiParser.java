@@ -81,15 +81,16 @@ public class WikiParser {
         StanfordCoreNLP nlpPipe = createCoreNLPObject();
         ArrayList<String> listPaths = listFiles(inputFolderPath);
         listPaths = removeFolders(listPaths, pickupFolder, folderLimit);
-//        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
+
+        //Debug
+        listPaths.clear();
+        listPaths.add("/media/stuff/temp/extracted/BL/wiki_23");
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
-        int folderLimit = 0;
         for (String path : listPaths) {
             Runnable worker = new ParserThread(path, nlpPipe);
 
             //worker will execute its "run()" function
             executor.execute(worker);
-            folderLimit++;
         }
         // This will make the executor accept no new threads
         // and finish all existing threads in the queue

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by pavel on 16/12/14.
@@ -388,9 +389,11 @@ public class ParserThread implements Runnable {
             // Foreach doc in the file
             Elements docs = doc.getElementsByTag("doc");
             for (Element c : docs) {
+                String articleTile = c.attr("title");
                 String docText = c.text();
-                docText = docText.replaceFirst(c.attr("title"), ""); ///> Remove the title from the content
-                bufferedOut.write("%%#PAGE " + c.attr("title") + nline);
+                docText = docText.replaceFirst(Pattern.quote(articleTile), ""); ///> Remove the title from the content
+//                System.out.println(docText);
+                bufferedOut.write("%%#PAGE " + articleTile + nline);
 
 
                 // Get anchors (links to other wiki articles) used in the document
