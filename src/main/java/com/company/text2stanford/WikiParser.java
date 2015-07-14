@@ -50,7 +50,7 @@ public class WikiParser {
         }
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-        WikiParser myWiki = new WikiParser(inputFolderPath, 8);
+        WikiParser myWiki = new WikiParser(inputFolderPath, 12);
         myWiki.run();
 
 
