@@ -17,7 +17,7 @@ public class WikiParser {
     //    private static int imput
     private String inputFolderPath;
     private String pickupFolder;
-    private int howMany;
+    private String folderLimit;
 
     WikiParser() {
     }
@@ -34,14 +34,14 @@ public class WikiParser {
         options.addOption("i", "input", true, "Input folder of extracted Wikipedia files");
         options.addOption("t", "threads", true, "Number of threads");
         options.addOption("p", "pickup", true, "Folder from where to restart (ignore the previous ones, ordered alphabetically)");
-        options.addOption("n", "howmany", true, "How many files we want to process?");
+        options.addOption("n", "limit", true, "Parse files until this folder");
         WikiParser myWiki = new WikiParser();
         try {
             CommandLine line = parser.parse(options, args);
             if (line.hasOption("n"))
-                myWiki.howMany = Integer.parseInt(line.getOptionValue("n"));
+                myWiki.folderLimit = line.getOptionValue("n");
             else
-                myWiki.howMany = Integer.MAX_VALUE;
+                myWiki.folderLimit = "";
 
             if (line.hasOption("t"))
                 myWiki.nThreads = Integer.parseInt(line.getOptionValue("t"));
@@ -51,7 +51,7 @@ public class WikiParser {
             if (line.hasOption("p"))
                 myWiki.pickupFolder = line.getOptionValue("p");
             else
-                myWiki.pickupFolder = "AA";
+                myWiki.pickupFolder = "";
 
             if (line.hasOption("i")) {
                 myWiki.inputFolderPath = line.getOptionValue("i");
@@ -80,18 +80,16 @@ public class WikiParser {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject();
         ArrayList<String> listPaths = listFiles(inputFolderPath);
-        listPaths = removeFolders(listPaths, pickupFolder);
+        listPaths = removeFolders(listPaths, pickupFolder, folderLimit);
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
-        int howMany = 0;
+        int folderLimit = 0;
         for (String path : listPaths) {
-            if (howMany > this.howMany)
-                break;
             Runnable worker = new ParserThread(path, nlpPipe);
 
             //worker will execute its "run()" function
             executor.execute(worker);
-            howMany++;
+            folderLimit++;
         }
         // This will make the executor accept no new threads
         // and finish all existing threads in the queue
