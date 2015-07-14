@@ -37,6 +37,15 @@ public class Utils {
         return null;
     }
 
+    public static ArrayList<String> removeFolders(ArrayList<String> listStrings, String pickup) {
+        int i;
+        ArrayList<String> newList = new ArrayList<>();
+        for (i = 0; i < listStrings.size(); i++)
+            if (listStrings.get(i).contains(pickup))
+                break;
+
+        return new ArrayList<>(listStrings.subList(i, listStrings.size()));
+    }
     public static double average(List<Integer> list) {
         // 'average' is undefined if there are no elements in the list.
         if (list == null || list.isEmpty())

@@ -9,40 +9,59 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.company.stanford2matrix.Utils.removeFolders;
 import static com.company.text2stanford.Utils.listFiles;
 
 public class WikiParser {
-    private static int nThreads;
+    private int nThreads;
     //    private static int imput
-    private static String inputFolderPath;
-    private static String outputFolderPath;
+    private String inputFolderPath;
+    private String pickupFolder;
+    private int howMany;
 
-    private static String pathFolder;
-
-    WikiParser(String pathFolder, int nThreads) {
-        WikiParser.nThreads = nThreads;
-        WikiParser.pathFolder = pathFolder;
+    WikiParser() {
     }
+
+//    WikiParser(String pathFolder, int nThreads) {
+//        WikiParser.nThreads = nThreads;
+//        WikiParser.pathFolder = pathFolder;
+//    }
 
     public static void main(String[] args) throws InterruptedException {
 
         CommandLineParser parser = new GnuParser();
         Options options = new Options();
         options.addOption("i", "input", true, "Input folder of extracted Wikipedia files");
-//        options.addOption("o", "output", true, "Output folder for parsed Wikipedia files");
-        String inputPath;
-
+        options.addOption("t", "threads", true, "Number of threads");
+        options.addOption("p", "pickup", true, "Folder from where to restart (ignore the previous ones, ordered alphabetically)");
+        options.addOption("n", "howmany", true, "How many files we want to process?");
+        WikiParser myWiki = new WikiParser();
         try {
             CommandLine line = parser.parse(options, args);
+            if (line.hasOption("n"))
+                myWiki.howMany = Integer.parseInt(line.getOptionValue("n"));
+            else
+                myWiki.howMany = Integer.MAX_VALUE;
+
+            if (line.hasOption("t"))
+                myWiki.nThreads = Integer.parseInt(line.getOptionValue("t"));
+            else
+                myWiki.nThreads = 8;
+
+            if (line.hasOption("p"))
+                myWiki.pickupFolder = line.getOptionValue("p");
+            else
+                myWiki.pickupFolder = "AA";
 
             if (line.hasOption("i")) {
-                inputFolderPath = line.getOptionValue("i");
+                myWiki.inputFolderPath = line.getOptionValue("i");
             } else
             //We cant continue if this is not set
             {
                 System.out.println("Please give an input folder");
                 return;
             }
+
         } catch (ParseException exp) {
             System.err.println("Parsing failed.  Reason: " + exp.getMessage());
             return;
@@ -50,7 +69,8 @@ public class WikiParser {
         }
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-        WikiParser myWiki = new WikiParser(inputFolderPath, 12);
+//        WikiParser myWiki = new WikiParser(inputFolderPath, pickupFolder, Integer.parseInt(numThreads));
+
         myWiki.run();
 
 
@@ -60,13 +80,18 @@ public class WikiParser {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject();
         ArrayList<String> listPaths = listFiles(inputFolderPath);
+        listPaths = removeFolders(listPaths, pickupFolder);
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/data/AA/wiki_00");
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
+        int howMany = 0;
         for (String path : listPaths) {
-//            System.out.println(path);
+            if (howMany > this.howMany)
+                break;
             Runnable worker = new ParserThread(path, nlpPipe);
+
             //worker will execute its "run()" function
             executor.execute(worker);
+            howMany++;
         }
         // This will make the executor accept no new threads
         // and finish all existing threads in the queue
