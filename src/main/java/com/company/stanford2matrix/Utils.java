@@ -42,16 +42,18 @@ public class Utils {
         ArrayList<String> newList = listStrings;
         if (!pickup.isEmpty()) {
             for (i = 0; i < listStrings.size(); i++)
-                if (listStrings.get(i).contains(pickup))
+                if (listStrings.get(i).contains(pickup)) {
+                    newList = new ArrayList<>(listStrings.subList(i, listStrings.size()));
                     break;
-            newList = new ArrayList<>(listStrings.subList(i, listStrings.size()));
+                }
         }
 
         if (!limit.isEmpty()) {
             for (i = 0; i < newList.size(); i++)
-                if (listStrings.get(i).contains(limit))
+                if (newList.get(i).contains(limit)) {
+                    newList = new ArrayList<>(newList.subList(0, i));
                     break;
-            newList = new ArrayList<>(listStrings.subList(0, i));
+                }
         }
         return newList;
     }
