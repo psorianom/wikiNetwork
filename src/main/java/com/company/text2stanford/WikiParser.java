@@ -83,8 +83,8 @@ public class WikiParser {
         listPaths = removeFolders(listPaths, pickupFolder, folderLimit);
 
         //Debug
-        listPaths.clear();
-        listPaths.add("/media/stuff/temp/extracted/BV/wiki_30");
+//        listPaths.clear();
+//        listPaths.add("/media/stuff/temp/extracted/BV/wiki_30");
 
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
         for (String path : listPaths) {
