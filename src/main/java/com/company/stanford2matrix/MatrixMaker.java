@@ -12,7 +12,8 @@ public class MatrixMaker {
     private static int column_j = 0;
     private static int row_i = 0; ///> The i index for the matrix
     public int numSent = 0;
-    ArrayList<String> listAllTokens = new ArrayList<>();
+    Map<String, Integer> cDictAllTokens = new DefaultDict<String, Integer>();
+    //    ArrayList<String> cListAllTokens = new ArrayList<>();
     ArrayList<Integer> averageLengthSentence = new ArrayList<>();
     //All this should not be part of the class... it should just have a MatrixContainer object
     private MatrixContainer matrix;
@@ -571,11 +572,17 @@ public class MatrixMaker {
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];
                     String token_pos = lemma + "_" + posTag;
-                    listAllTokens.add(token);
 
-                    lListAllTokensPOS.add(token_pos);
+//                    cListAllTokens.add(token);
+                    if (cDictAllTokens.containsKey(token))
+                        cDictAllTokens.put(token, cDictAllTokens.get(token) + 1);
+                    else
+                        cDictAllTokens.put(token, 1);
+
+
                     if (onlyStatistics)
                         continue;
+                    lListAllTokensPOS.add(token_pos);
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
                     if (dependency.equals("PUNCT") || !constituency.contains("NP"))
                         continue;
@@ -789,6 +796,9 @@ public class MatrixMaker {
 
         /* big loop with for each file of the wiki stanford-parsed files*/
         int idx = 1;
+        ///Debug
+//        listPaths.clear();
+//        listPaths.add("/media/stuff/temp/extracted/BV/");
 
         ///> This loops goes file by file
 //        listPaths = new ArrayList<>(listPaths.subList(0, 100)); ///>DEBUG sublist
@@ -799,15 +809,16 @@ public class MatrixMaker {
             idx++;
             System.out.flush();
         }
-        HashSet<String> typesSet = new HashSet<>(listAllTokens);
+//        HashSet<String> typesSet = new HashSet<>(cListAllTokens);
+
 
         System.out.println("Parse statistics:\n");
         System.out.println("\tNumber of parsed sentences: " + Integer.toString(numSent));
-        System.out.println("\tNumber of tokens: " + Integer.toString(listAllTokens.size()));
-        System.out.println("\tNumber of types: " + Integer.toString(typesSet.size()));
+        System.out.println("\tNumber of tokens: " + Integer.toString(cDictAllTokens.size()));
+        System.out.println("\tNumber of types: " + Integer.toString(sumValues(cDictAllTokens)));
         System.out.println("\tAverage number of tokens per sentence: " + Double.toString(average(averageLengthSentence)));
-        /// Matrix creation done. We save it and display some stats
 
+        /// Matrix creation done. We save it and display some stats
         if (this.matrix.cRows.size() != this.matrix.cCols.size())
             throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something was wrong...");
         ///>Print some matrix statistics

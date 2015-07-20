@@ -57,6 +57,13 @@ public class Utils {
         }
         return newList;
     }
+
+    public static Integer sumValues(Map<String, Integer> mapToSum) {
+        int sum = 0;
+        for (int f : mapToSum.values())
+            sum += f;
+        return sum;
+    }
     public static double average(List<Integer> list) {
         // 'average' is undefined if there are no elements in the list.
         if (list == null || list.isEmpty())
