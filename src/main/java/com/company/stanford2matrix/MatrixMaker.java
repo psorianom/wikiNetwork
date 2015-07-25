@@ -562,12 +562,15 @@ public class MatrixMaker {
                 averageLengthSentence.add(lines.size());
                 for (String l : lines) {///>Each line is a word
                     String[] splittedLine = l.split("\t");
+                    if (splittedLine.length < 6) {
+                        System.out.format("The document %s does not have a complete parse. This should not happen. Check it!", pathFile);
+                        continue;
+                    }
                     String token = splittedLine[0];
                     String lemma = splittedLine[1];
                     String posTag = splittedLine[2];
-                    System.out.println("\t " + l);
-//                    if (splittedLine.length < 4)
-//                        System.out.println("No mamar");
+//                    System.out.println("\t " + l);
+
                     String constituency = splittedLine[3];
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];
