@@ -817,8 +817,8 @@ public class MatrixMaker {
 
         System.out.println("Parse statistics:\n");
         System.out.println("\tNumber of parsed sentences: " + Integer.toString(numSent));
-        System.out.println("\tNumber of tokens: " + Integer.toString(cDictAllTokens.size()));
-        System.out.println("\tNumber of types: " + Integer.toString(sumValues(cDictAllTokens)));
+        System.out.println("\tNumber of types: " + Integer.toString(cDictAllTokens.size()));
+        System.out.println("\tNumber of tokens: " + Integer.toString(sumValues(cDictAllTokens)));
         System.out.println("\tAverage number of tokens per sentence: " + Double.toString(average(averageLengthSentence)));
 
         /// Matrix creation done. We save it and display some stats

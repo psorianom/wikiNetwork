@@ -37,7 +37,7 @@ public class Utils {
         return null;
     }
 
-    public static ArrayList<String> removeFolders(ArrayList<String> listStrings, String pickup, String limit) {
+    public static ArrayList<String> removeNotNeededFolders(ArrayList<String> listStrings, String pickup, String limit) {
         int i;
         ArrayList<String> newList = listStrings;
         if (!pickup.isEmpty()) {

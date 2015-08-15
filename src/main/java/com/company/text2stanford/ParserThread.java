@@ -1,5 +1,6 @@
 package com.company.text2stanford;
 
+import com.company.stanford2matrix.Utils;
 import edu.stanford.nlp.ling.CoreAnnotations.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -10,6 +11,9 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
+import is2.data.SentenceData09;
+import is2.io.CONLLReader09;
+import is2.tools.Tool;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.jsoup.Jsoup;
@@ -19,10 +23,7 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -37,12 +38,13 @@ public class ParserThread implements Runnable {
     public final String header = "token\tlemma\tPOS\tconstituency\thead\tdependency";
     public String pathFile;
     public StanfordCoreNLP coreParser;
-    public ArrayList<String> seenPhrasals = new ArrayList<>();
+    public Map<String, Tool> mateTools;
 
     //    Constructor
-    ParserThread(String pathFile, StanfordCoreNLP coreParser) {
+    ParserThread(String pathFile, StanfordCoreNLP coreParser, Map mateTools) {
         this.coreParser = coreParser;
         this.pathFile = pathFile;
+        this.mateTools = mateTools;
     }
 
     public HashMap<String, String> getAnchors(Elements anchors) {
@@ -61,7 +63,65 @@ public class ParserThread implements Runnable {
     }
 
 
-    public HashMap<Integer, HashMap> tokenDependencies(SemanticGraph depGraph) {
+    public Map<Integer, HashMap> mateTokenDependencies(String[] phrase) {
+        /**
+         * This function takes the tokens of a phrase, inside a list of strings,  and returns
+         * a dictionary of dictionaries: {wordIndex:{ "relation": subj", "headIndex": "2"}, ...}
+         * Each word of the phrase has a dict with each dependency it belongs to and its corresponding head.
+         * Using the mate-tools parser
+         */
+
+
+        Map<Integer, HashMap> tokenDeps = new Utils.DefaultDict<>(HashMap.class);
+
+        String[] phraseRoot = new String[phrase.length + 1];
+        System.arraycopy(phrase, 0, phraseRoot, 1, phrase.length);
+        phraseRoot[0] = CONLLReader09.ROOT;
+
+
+        SentenceData09 s = new SentenceData09();
+        s.init(phraseRoot);
+//        phrase.add(0, "<root>");
+//        s.init(phrase.toArray(new String[phrase.size()]));
+//
+        s = mateTools.get("lemmatizer").apply(s);
+        s = mateTools.get("POStagger").apply(s);
+//        is2.parser.Parser parso = (is2.parser.Parser) mateTools.get("dependencyParser");
+//        parso. params = new ParametersFloat(0);
+//        parso.parse(s, parso.params, false, parso.options);
+//        s = mateTools.get("dependencyParser").apply(s);
+//
+//        for (int k = 0; k < s.length(); k++) {
+////            System.out.println(Integer.toString(k + 1) + "\t" + s.forms[k] + "\t" + s.plemmas[k] + "\t" + s.pheads[k] + "\t" + s.plabels[k]);
+//
+//            tokenDeps.get(k + 1).put("relation", s.plabels[k]);
+//            tokenDeps.get(k + 1).put("headIndex", Integer.toString(s.pheads[k]));
+//            tokenDeps.get(k + 1).put("lemma", s.plemmas[k]);
+//        }
+
+        return tokenDeps;
+    }
+
+    public String[] getOnlyTokens(List<CoreLabel> stanfordTokens) {
+        /**
+         * Receives a list of CoreLabels and returns a list of only the tokens they contain.
+         */
+        String[] onlyTokens = new String[stanfordTokens.size()];
+        for (int i = 0; i < stanfordTokens.size(); i++) {
+            onlyTokens[i] = stanfordTokens.get(i).get(TextAnnotation.class);
+        }
+//        for (CoreLabel t : stanfordTokens)
+//            onlyTokens.add(t.get(TextAnnotation.class));
+
+        return onlyTokens;
+    }
+
+    public HashMap<Integer, HashMap> coreNLPTokenDependencies(SemanticGraph depGraph) {
+        /**
+         * This function takes a SemanticGraph object (with the typed dependencies of a sentence) and returns
+         * a dictionary of dictionaries: {wordIndex:{ "relation": subj", "headIndex": "2"}, ...}
+         * Each word of the phrase has a dict with each dependency it belongs to and its corresponding head.
+         */
         HashMap<Integer, HashMap> tokenDeps = new HashMap<>();
         Collection<TypedDependency> typedDeps = depGraph.typedDependencies();
         for (TypedDependency depn : typedDeps) {
@@ -142,7 +202,7 @@ public class ParserThread implements Runnable {
 
                     // this is the dependency graph of the current sentence
                     SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                    HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+                    HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
@@ -234,7 +294,7 @@ public class ParserThread implements Runnable {
 
                         // this is the dependency graph of the current sentence
                         SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                        HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+                        HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
                         // traversing the words in the current sentence
                         // a CoreLabel is a CoreMap with additional token-specific methods
@@ -325,7 +385,7 @@ public class ParserThread implements Runnable {
 
                     // this is the dependency graph of the current sentence
                     SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                    HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+                    HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
@@ -375,7 +435,6 @@ public class ParserThread implements Runnable {
         try {
 
             File input = new File(pathFile);
-
             String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
@@ -403,12 +462,14 @@ public class ParserThread implements Runnable {
 //                docText = "A great brigand becomes a ruler of a Nation";
 
                 Annotation document = new Annotation(docText);
+
                 coreParser.annotate(document);
                 // Treat the result
                 List<CoreMap> sentences = document.get(SentencesAnnotation.class);
                 int sentenceId = 0;
                 for (CoreMap sentence : sentences) {
                     List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
+                    String[] onlyTextTokens = getOnlyTokens(listTokens);
                     int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
@@ -416,31 +477,40 @@ public class ParserThread implements Runnable {
 
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
-//                    String pennString = tree.pennString();
+                    String pennString = tree.pennString();
+//                    System.out.println(pennString);
                     HashMap<Integer, ArrayList> constituencyTokens = tokenConstituencies(tree.skipRoot());
+                    Map<Integer, HashMap> dependencyTokens;
+                    //> Here we determine which dependency parser to use according to the language. We also find the lemmas.
+                    if (WikiParser.wikiLanguage.equals("en")) {
 
-                    // this is the dependency graph of the current sentence
-                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                    HashMap<Integer, HashMap> dependencyTokens = tokenDependencies(dependencies);
+                        // this is the dependency graph of the current sentence
+                        SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                        dependencyTokens = coreNLPTokenDependencies(dependencies);
+                    } else
+                        dependencyTokens = mateTokenDependencies(onlyTextTokens);
 
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
                     String head;
                     String dependency;
+                    String lemma;
                     for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
-
                         // this is the text of the token
                         String word = token.get(TextAnnotation.class);
                         // this is the index of said token
                         int wordIndex = token.get(IndexAnnotation.class);
                         // this is the POS tag of the token
                         String pos = token.get(PartOfSpeechAnnotation.class);
-                        // this is the  lemma of the token
-                        String lemma = token.get(LemmaAnnotation.class);
                         // this is the constituency information of the token
                         String constituency = String.join(",", constituencyTokens.get(wordIndex));
-                        // this is the constituency information of the token
-                        // the head first
+
+                        if (WikiParser.wikiLanguage.equals("en"))
+                            // this is the  lemma of the token
+                            lemma = token.get(LemmaAnnotation.class);
+                        else
+                            lemma = (String) dependencyTokens.get(wordIndex).get("lemma");
+
                         if (dependencyTokens.get(wordIndex) == null) {
                             head = "0";
                             dependency = "PUNCT";
@@ -449,6 +519,8 @@ public class ParserThread implements Runnable {
                             // the relation (dependency label)
                             dependency = (String) dependencyTokens.get(wordIndex).get("relation");
                         }
+
+
                         // create the line that will be written in the output
                         line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
                         bufferedOut.write(line);

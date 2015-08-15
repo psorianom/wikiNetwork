@@ -9,6 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <dependencies>
 
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-io</artifactId>
@@ -41,6 +42,14 @@
             <version>3.5.2</version>
             <classifier>models</classifier>
         </dependency>
+        <dependency>
+            <groupId>is2</groupId>
+            <artifactId>mate-parser</artifactId>
+            <version>3.61</version>
+            <scope>system</scope>
+            <systemPath>${project.build.directory}/dependency/anna-3.61.jar</systemPath>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
