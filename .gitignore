@@ -1,1 +1,5 @@
 *.idea*
+data/*
+*.log
+*.sh
+.svn/*
