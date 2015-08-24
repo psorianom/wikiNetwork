@@ -47,8 +47,15 @@
             <artifactId>mate-parser</artifactId>
             <version>3.61</version>
             <scope>system</scope>
-            <systemPath>${project.build.directory}/dependency/anna-3.61.jar</systemPath>
+            <systemPath>${project.build.directory}/dependency/anna-3.3.jar</systemPath>
         </dependency>
+        <!--<dependency>-->
+        <!--<groupId>jni</groupId>-->
+        <!--<artifactId>DeSR</artifactId>-->
+        <!--<version>1.4.3</version>-->
+        <!--<scope>system</scope>-->
+        <!--<systemPath>${project.build.directory}/dependency/lobjdesr.so</systemPath>-->
+        <!--</dependency>-->
 
     </dependencies>
     <build>

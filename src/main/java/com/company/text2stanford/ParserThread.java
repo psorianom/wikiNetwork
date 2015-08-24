@@ -14,6 +14,8 @@ import edu.stanford.nlp.util.CoreMap;
 import is2.data.SentenceData09;
 import is2.io.CONLLReader09;
 import is2.tools.Tool;
+
+import jni.Token;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.jsoup.Jsoup;
@@ -24,7 +26,10 @@ import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by pavel on 16/12/14.
@@ -34,19 +39,21 @@ import java.util.regex.Pattern;
 public class ParserThread implements Runnable {
 
 
+    public static ReentrantLock lock;
     public final String nline = "\n";
     public final String header = "token\tlemma\tPOS\tconstituency\thead\tdependency";
     public String pathFile;
     public StanfordCoreNLP coreParser;
     public Map<String, Tool> mateTools;
-
+    public jni.Parser desrParser;
     //    Constructor
-    ParserThread(String pathFile, StanfordCoreNLP coreParser, Map mateTools) {
+    ParserThread(String pathFile, StanfordCoreNLP coreParser, Map mateTools, jni.Parser desrParser) {
         this.coreParser = coreParser;
         this.pathFile = pathFile;
         this.mateTools = mateTools;
-    }
+        this.desrParser = desrParser;
 
+    }
     public HashMap<String, String> getAnchors(Elements anchors) {
         HashMap<String, String> anchorMap = new HashMap<>();
 
@@ -62,58 +69,126 @@ public class ParserThread implements Runnable {
         return anchorMap;
     }
 
+    public Map<Integer, HashMap> parseDeSR(String[] words, String[] lemmas, String[] feats, String[] CPOStags,
+                                           String[] POStags) {
 
-    public Map<Integer, HashMap> mateTokenDependencies(String[] phrase) {
+
+        final String[] atts = {"ID", "FORM", "LEMMA", "CPOSTAG", "POSTAG", "FEATS", "HEAD", "DEPREL"};
+        ArrayList<String[]> listAttributesValues = new ArrayList<>();
+        listAttributesValues.add(words);
+        listAttributesValues.add(lemmas);
+        listAttributesValues.add(CPOStags); //Coarse POS TAG
+        listAttributesValues.add(POStags); // I don't have a fine POSTAG parser, so I will use the same as before
+        listAttributesValues.add(feats);
+        //listAttributesValues.add(POStags);
+        jni.Language la = new jni.Language("es");
+        jni.Corpus cc = jni.Corpus.create(la, "CoNLL");
+        Map<Integer, HashMap> tokenDeps = new Utils.DefaultDict<>(HashMap.class);
+        //Manually create a sentence
+        jni.Sentence inputSentence = new jni.Sentence(la);
+        jni.Sentence s2 = null;
+
+        for (int w = 0; w < words.length; w++) {
+            jni.Token tok = new Token(words[w], cc);
+            tok.setAttribute("ID", "" + (w + 1));
+
+            for (int a = 0; a < listAttributesValues.size(); ++a)
+                tok.setAttribute(atts[a + 1], listAttributesValues.get(a)[w]);
+            jni.TreeToken t = new jni.TreeToken(w + 1, tok);
+            inputSentence.add(t);
+
+        }
+        // Finally parse after all the input preparation:
+
+//            System.err.println("sent size: " + inputSentence.size());
+        //        inputSentence.size();
+        //            System.out.println("");
+
+        s2 = desrParser.parse(inputSentence);
+
+        for (int i = 0; i < s2.size(); i++) {
+            jni.TreeToken currentToken = s2.get(i);
+            int wordIndex = Integer.parseInt(currentToken.getAttribute("ID"));
+            tokenDeps.get(wordIndex).put("relation", currentToken.linkLabel());
+            tokenDeps.get(wordIndex).put("headIndex", Integer.toString(currentToken.linkHead()));
+            tokenDeps.get(wordIndex).put("lemma", currentToken.getAttribute("LEMMA"));
+
+        }
+        //        System.out.println("Output:\n" + cc.toString(s2));
+        //        System.out.println("Output:" + s2.get(0).get("HEAD").toString());
+        //        System.out.println("Output:\n"+s2.get(0).linkLabel());
+        return tokenDeps;
+    }
+
+
+    public Map<Integer, HashMap> deSRTokenDependencies(List<CoreLabel> stanfordTokens) {
         /**
          * This function takes the tokens of a phrase, inside a list of strings,  and returns
          * a dictionary of dictionaries: {wordIndex:{ "relation": subj", "headIndex": "2"}, ...}
          * Each word of the phrase has a dict with each dependency it belongs to and its corresponding head.
-         * Using the mate-tools parser
+         * Using the mate-tools parser and DeSR parser. Mate to get the lemmas and pos tags (which could be get with
+         * Stanford parser)
          */
 
+        //This is for mate tools parser
+        //We get the tokens and its posTags
+        Map<String, String[]> StanfordTokensAndPOSTags = getTokensAndPOSTags(stanfordTokens);
 
-        Map<Integer, HashMap> tokenDeps = new Utils.DefaultDict<>(HashMap.class);
-
-        String[] phraseRoot = new String[phrase.length + 1];
-        System.arraycopy(phrase, 0, phraseRoot, 1, phrase.length);
+        String[] phraseRoot = new String[stanfordTokens.size() + 1];
+        System.arraycopy(StanfordTokensAndPOSTags.get("forms"), 0, phraseRoot, 1, stanfordTokens.size());
         phraseRoot[0] = CONLLReader09.ROOT;
 
 
         SentenceData09 s = new SentenceData09();
         s.init(phraseRoot);
-//        phrase.add(0, "<root>");
-//        s.init(phrase.toArray(new String[phrase.size()]));
-//
         s = mateTools.get("lemmatizer").apply(s);
-        s = mateTools.get("POStagger").apply(s);
-//        is2.parser.Parser parso = (is2.parser.Parser) mateTools.get("dependencyParser");
-//        parso. params = new ParametersFloat(0);
-//        parso.parse(s, parso.params, false, parso.options);
-//        s = mateTools.get("dependencyParser").apply(s);
-//
-//        for (int k = 0; k < s.length(); k++) {
-////            System.out.println(Integer.toString(k + 1) + "\t" + s.forms[k] + "\t" + s.plemmas[k] + "\t" + s.pheads[k] + "\t" + s.plabels[k]);
+        s = mateTools.get("mtagger").apply(s);
+
+//        s = mateTools.get("POStagger").apply(s);
+        //> This is here is to get the parse info from mate-tools. Unfortunately, mate parser is too slow.
+//            for (int k = 0; k < s.length(); k++) {
 //
 //            tokenDeps.get(k + 1).put("relation", s.plabels[k]);
 //            tokenDeps.get(k + 1).put("headIndex", Integer.toString(s.pheads[k]));
 //            tokenDeps.get(k + 1).put("lemma", s.plemmas[k]);
 //        }
 
+        // Now I prepare structures for DeSR parser.
+
+        // This next is for DeSR parser
+
+        Map<Integer, HashMap> tokenDeps = parseDeSR(s.forms, s.plemmas, s.pfeats, StanfordTokensAndPOSTags.get("CPOS"), StanfordTokensAndPOSTags.get("POS"));
+
+
+//        s = mateTools.get("dependencyParser").apply(s);
+//
+
         return tokenDeps;
     }
 
-    public String[] getOnlyTokens(List<CoreLabel> stanfordTokens) {
+    public Map<String, String[]> getTokensAndPOSTags(List<CoreLabel> stanfordTokens) {
         /**
          * Receives a list of CoreLabels and returns a list of only the tokens they contain.
          */
-        String[] onlyTokens = new String[stanfordTokens.size()];
+        Map<String, String[]> tokenPOStag = new HashMap<>();
+        String[] tokens = new String[stanfordTokens.size()];
+        String[] CPOStags = new String[stanfordTokens.size()];
+        String[] POStags = new String[stanfordTokens.size()];
         for (int i = 0; i < stanfordTokens.size(); i++) {
-            onlyTokens[i] = stanfordTokens.get(i).get(TextAnnotation.class);
-        }
-//        for (CoreLabel t : stanfordTokens)
-//            onlyTokens.add(t.get(TextAnnotation.class));
+            CoreLabel token = stanfordTokens.get(i);
+            tokens[i] = token.get(TextAnnotation.class);
+            String posTag = token.get(PartOfSpeechAnnotation.class);
+            if (posTag.substring(0, 1).toLowerCase().equals("f"))
+                POStags[i] = "f";
+            else
+                POStags[i] = posTag.substring(0, Math.min(2, posTag.length()));
+            CPOStags[i] = POStags[i].substring(0, 1);
 
-        return onlyTokens;
+        }
+        tokenPOStag.put("forms", tokens);
+        tokenPOStag.put("CPOS", CPOStags);
+        tokenPOStag.put("POS", POStags);
+        return tokenPOStag;
     }
 
     public HashMap<Integer, HashMap> coreNLPTokenDependencies(SemanticGraph depGraph) {
@@ -144,7 +219,6 @@ public class ParserThread implements Runnable {
     public HashMap<Integer, ArrayList> tokenConstituencies(Tree tree) {
         HashMap<Integer, ArrayList> tokenTags = new HashMap<>();
         List<Tree> children = tree.getChildrenAsList();
-        List<Tree> siblings = new ArrayList<>();
         ArrayList<String> listTags = new ArrayList<>();
         //Traverse depth search first the tree looking for all the constituents
 
@@ -460,6 +534,7 @@ public class ParserThread implements Runnable {
 
                 // Parse the document with CoreNLP
 //                docText = "A great brigand becomes a ruler of a Nation";
+//                docText = "Además, en 2012 jugó con la Selección B un torneo en Brasil.";
 
                 Annotation document = new Annotation(docText);
 
@@ -469,7 +544,8 @@ public class ParserThread implements Runnable {
                 int sentenceId = 0;
                 for (CoreMap sentence : sentences) {
                     List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
-                    String[] onlyTextTokens = getOnlyTokens(listTokens);
+
+
                     int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
@@ -478,23 +554,30 @@ public class ParserThread implements Runnable {
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
                     String pennString = tree.pennString();
-//                    System.out.println(pennString);
+//                    System.out.println(sentence.toString());
                     HashMap<Integer, ArrayList> constituencyTokens = tokenConstituencies(tree.skipRoot());
-                    Map<Integer, HashMap> dependencyTokens;
+                    Map<Integer, HashMap> dependencyTokens = null;
                     //> Here we determine which dependency parser to use according to the language. We also find the lemmas.
+                    // if it is english we use only the Stanford Parser.
                     if (WikiParser.wikiLanguage.equals("en")) {
 
                         // this is the dependency graph of the current sentence
                         SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
                         dependencyTokens = coreNLPTokenDependencies(dependencies);
-                    } else
-                        dependencyTokens = mateTokenDependencies(onlyTextTokens);
+                    } else {//Otherwise, we use the mate and DeSR parsers.
 
+                        dependencyTokens = deSRTokenDependencies(listTokens);
+                    }
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
                     String head;
                     String dependency;
                     String lemma;
+//                    ArrayList<CoreLabel> sentenceTokens =(ArrayList) sentence.get(TokensAnnotation.class);
+
+//                    for (int i = 0; i < sentence.size(); i++)
+//                    {
+//                        CoreLabel token = sentenceTokens.get(i);
                     for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
                         // this is the text of the token
                         String word = token.get(TextAnnotation.class);
@@ -505,8 +588,9 @@ public class ParserThread implements Runnable {
                         // this is the constituency information of the token
                         String constituency = String.join(",", constituencyTokens.get(wordIndex));
 
+
                         if (WikiParser.wikiLanguage.equals("en"))
-                            // this is the  lemma of the token
+
                             lemma = token.get(LemmaAnnotation.class);
                         else
                             lemma = (String) dependencyTokens.get(wordIndex).get("lemma");
