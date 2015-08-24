@@ -150,7 +150,7 @@ public class WikiParser {
 
         // Morphology tagger
         System.out.println("\nLoading mate-tools morphology tagger...\n\n");
-        is2.mtag.Tagger morphoTagger = new is2.mtag.Tagger("/media/stuff/Pavel/Documents/Eclipse/workspace/javahello/resources/Spanish/CoNLL2009-ST-Spanish-ALL.anna-3.3.morphtagger.model");
+        is2.mtag.Tagger morphoTagger = new is2.mtag.Tagger("./resources/\" + lang + \"/CoNLL2009-ST-\" + lang + \"-ALL.anna-3.3.morphtagger.model");
         // POStagger
 //        System.out.println("\nLoading mate-tools POS tagger...\n\n");
 //        Tool posTagger = new Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.postagger.model");
