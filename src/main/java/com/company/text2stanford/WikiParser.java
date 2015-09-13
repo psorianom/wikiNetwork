@@ -5,9 +5,14 @@ import is2.data.InstancesTagger;
 import is2.data.SentenceData09;
 import is2.io.CONLLReader09;
 import is2.lemmatizer.Lemmatizer;
+import is2.tag.Tagger;
 import is2.tools.Tool;
 import org.apache.commons.cli.*;
+import org.maltparser.concurrent.ConcurrentMaltParserModel;
+import org.maltparser.concurrent.ConcurrentMaltParserService;
 
+import java.io.File;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,10 +102,11 @@ public class WikiParser {
         StanfordCoreNLP nlpPipe = createCoreNLPObject(wikiLanguage);
         Map<String, Tool> mateParser = new HashMap<>();
         jni.Parser desrParser = null;
-
+        ConcurrentMaltParserModel maltParser = null;
         if (!wikiLanguage.equals("en")) {
             mateParser = createMateTools(wikiLanguage);
             desrParser = createDeSRParser("./resources/Spanish/spanish.MLP");
+            maltParser = createMaltParser("./resources/Spanish/");
         }
         ArrayList<String> listPaths = listFiles(inputFolderPath);
         listPaths = removeAlreadyParsedFolders(listPaths, pickupFolder, folderLimit);
@@ -114,7 +120,7 @@ public class WikiParser {
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
         ParserThread.lock = new ReentrantLock();
         for (String path : listPaths) {
-            Runnable worker = new ParserThread(path, nlpPipe, mateParser, desrParser);
+            Runnable worker = new ParserThread(path, nlpPipe, mateParser, desrParser, maltParser);
             //worker will execute its "run()" function
             executor.execute(worker);
         }
@@ -136,6 +142,17 @@ public class WikiParser {
 
     }
 
+    public ConcurrentMaltParserModel createMaltParser(String modelPath) {
+        ConcurrentMaltParserModel model = null;
+        try {
+            URL swemaltMiniModelURL = new File(modelPath).toURI().toURL();
+            model = ConcurrentMaltParserService.initializeParserModel(swemaltMiniModelURL);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return model;
+    }
+
     public Map<String, Tool> createMateTools(String lang) {
         if (lang.equals("es"))
             lang = "Spanish";
@@ -152,18 +169,19 @@ public class WikiParser {
         System.out.println("\nLoading mate-tools morphology tagger...\n\n");
         is2.mtag.Tagger morphoTagger = new is2.mtag.Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.morphtagger.model");
         // POStagger
-//        System.out.println("\nLoading mate-tools POS tagger...\n\n");
-//        Tool posTagger = new Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.postagger.model");
+        System.out.println("\nLoading mate-tools POS tagger...\n\n");
+        Tool posTagger = new Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.postagger.model");
 
         // Parser
-//        String modelName = "./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.morphtagger.model";
-//        is2.mtag.Options opts = new is2.mtag.Options(new String[]{"-model", modelName});
-//        System.out.println("\nLoading mate-tools parser...\n\n");
-//        Tool parser = new is2.mtag.Tagger(opts);
+        System.out.println("\nLoading mate-tools parser...\n\n");
+        String modelName = "./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.parser.model";
+        is2.parser.Options opts = new is2.parser.Options(new String[]{"-model", modelName});
+
+        Tool parser = new is2.parser.Parser(opts);
         tools.put("lemmatizer", lemmatizer);
         tools.put("mtagger", morphoTagger);
-//        tools.put("POStagger", posTagger);
-//        tools.put("dependencyParser", parser);
+        tools.put("POStagger", posTagger);
+        tools.put("dependencyParser", parser);
         System.out.println("\nFinished loading mate-tools...\n");
         return tools;
 
@@ -180,6 +198,7 @@ public class WikiParser {
                 props.put("annotators", "tokenize, ssplit, pos, parse");
                 props.setProperty("tokenize.options", "invertible=true,ptb3Escaping=true,normalizeParentheses=false");
                 props.put("tokenize.language", "es");
+                props.put("threads", "2");
                 props.put("pos.model", "edu/stanford/nlp/models/pos-tagger/spanish/spanish-distsim.tagger");
                 props.put("parse.model", "edu/stanford/nlp/models/srparser/spanishSR.ser.gz");
 

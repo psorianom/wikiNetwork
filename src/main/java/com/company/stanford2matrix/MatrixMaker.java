@@ -37,15 +37,15 @@ public class MatrixMaker {
             dataPath = args[1];
 
         else if (mode.equals("corpus")) {
-//            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
+            dataPath = "../data/these_graph/oanc/corpus";
 //            dataPath = "/home_nfs/eric/esorianomorales/wikitest/extracted/BL";
-            dataPath = "/media/stuff/temp/extracted/BL";
+//            dataPath = "/media/stuff/temp/extracted/BL";
 //            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
 
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
-            myMaker.runParseCorpus(false);
+            myMaker.runParseCorpus(true);
         } else if (mode.equals("semeval_2007")) {
             dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/";
             myMaker.setDataPath(dataPath);
@@ -128,8 +128,9 @@ public class MatrixMaker {
 
     private final void addSentenceColumns(ArrayList<String> listTokens, int hashLength) {
 //        System.out.println(listTokens.hashCode());
-        Set<String> hashTokens = new HashSet<>(listTokens);
-        listTokens = new ArrayList<>(hashTokens);
+//        Set<String> hashTokens = new HashSet<>(listTokens);
+//        listTokens = new ArrayList<>(hashTokens);
+        String phrase = String.join(" ", listTokens);
         int hashcode;
         if (hashLength > 0)
             hashcode = listTokens.hashCode() % hashLength;
@@ -140,14 +141,15 @@ public class MatrixMaker {
         }
         int lSentenceDataIndex;
         int ngram_col;
-        if (matrix.cSentenceColumn.containsKey(hashcode)) {
-            ngram_col = matrix.cSentenceColumn.get(hashcode);
+        if (matrix.cSentenceHashColumn.containsKey(hashcode)) {
+            ngram_col = matrix.cSentenceHashColumn.get(hashcode);
             lSentenceDataIndex = matrix.cSentenceDataVectorIndex.get(ngram_col);
             for (int i = 0; i < listTokens.size(); i++)
                 matrix.cData.set(lSentenceDataIndex + i, this.matrix.cData.get(lSentenceDataIndex + i) + 1);
         } else {
-            matrix.cSentenceColumn.put(hashcode, ++column_j);
-            matrix.cColumnSentence.put(column_j, Integer.toString(hashcode)); ///> We save the inverted index
+            matrix.cSentenceHashColumn.put(hashcode, ++column_j);
+            matrix.cColumnSentenceHash.put(column_j, Integer.toString(hashcode)); ///> We save the inverted index
+            matrix.cColumnSentenceWords.put(column_j, phrase);
             matrix.cSentenceDataVectorIndex.put(column_j, matrix.cCols.size());
             for (int i = 0; i < listTokens.size(); i++) {
                 matrix.cRows.add(this.matrix.cTokenRow.get(listTokens.get(i)));
@@ -200,7 +202,7 @@ public class MatrixMaker {
         }
     }
 
-    private final Map<String, ArrayList<Integer>> addNgramsColumns(ArrayList<String> listTokens, int n) {
+    private Map<String, ArrayList<Integer>> addNgramsColumns(ArrayList<String> listTokens, int n) {
         /**
          * From a list of tokens, calculates its n ngrams and adds them to the matrix.
          * It computes the ngrams and then updates the ijv vectors containing the matrix, according to
@@ -348,8 +350,8 @@ public class MatrixMaker {
                         if (!matrix.cTokenRow.containsKey(token_pos)) {
                             ///>This is the dict with the pos_tag : row_index
                             matrix.cTokenRow.put(token_pos, row_i);
-                            /// Save inverted index
-                            matrix.cRowToken.put(row_i, lemma);
+                            ///> Save inverted index
+                            matrix.cRowToken.put(row_i, token_pos);
                             matrix.cPOSToken.get(posTag).add(row_i);
                             row_i++;
 
@@ -808,7 +810,8 @@ public class MatrixMaker {
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
             ///> This is the function that actually parses the wiki Stanford parse into a graph
-            this.prepareCorpiMatrixNPs(path, false, true);
+
+            this.prepareCorpiMatrixNPs(path, false, false);
             idx++;
             System.out.flush();
         }

@@ -36,6 +36,7 @@ public class MatrixContainer {
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
     public Map<Integer, String> cTokenPOS; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
     public Map<String, Integer> cNPwordsColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
+
     /**
      * Contains the type of column there are (NP, VP, PRP, MODIF, ...) and the subtype, if present, ("DT_JJ_NN","DT_NN",etc).
      * Then the columns indices that correspond to each case. Something like {'NP':{"DT_NN":[1,2,3]}, ...}
@@ -44,8 +45,9 @@ public class MatrixContainer {
     public Map<String, Integer> cNgramColumn;
     public Map<String, Integer> cDependencyColumn;
     public Map<Integer, String> cColumnDependency;
-    public Map<Integer, Integer> cSentenceColumn;
-    public Map<Integer, String> cColumnSentence;
+    public Map<Integer, Integer> cSentenceHashColumn;
+    public Map<Integer, String> cColumnSentenceHash;
+    public Map<Integer, String> cColumnSentenceWords;
     private float sparsity;
     private int numColumns;
 
@@ -78,8 +80,9 @@ public class MatrixContainer {
         cNgramColumn = new HashMap();
         cColumnDependency = new HashMap<>();
         cDependencyColumn = new HashMap<>();
-        cSentenceColumn = new HashMap<>();
-        cColumnSentence = new HashMap<>();
+        cSentenceHashColumn = new HashMap<>();
+        cColumnSentenceHash = new HashMap<>();
+        cColumnSentenceWords = new HashMap<>();
 
     }
 

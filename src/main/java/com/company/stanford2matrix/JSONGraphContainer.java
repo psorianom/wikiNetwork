@@ -32,7 +32,7 @@ public class JSONGraphContainer {
         /// Get the required maps to build the vertices dataframe
         Map<Integer, ArrayList<String>> columnSubclause = columnToNode(matrix.cColumnSubClause, maxRows, "phrase");
         Map<Integer, ArrayList<String>> columnDependency = columnToNode(matrix.cColumnDependency, maxRows, "dependency");
-        Map<Integer, ArrayList<String>> columnSentence = columnToNode(matrix.cColumnSentence, maxRows, "sentence");
+        Map<Integer, ArrayList<String>> columnSentence = columnToNode(matrix.cColumnSentenceHash, maxRows, "sentence");
 
         Map<Integer, String> rowToken = matrix.cRowToken;
         Map<Integer, String> rowPOS = matrix.cTokenPOS;

@@ -105,8 +105,6 @@ public class Utils {
                 if (oldValue != null)
                     throw new IllegalArgumentException("Map values must be unique");
             }
-
-
         }
 
         return inv;
@@ -154,6 +152,8 @@ public class Utils {
         String cDependencyColumn = gson.toJson(matrix.cDependencyColumn);
         saveTextFile(pathMetaData + "cDependencyColumn", cDependencyColumn, ".json");
 
+        String cColumnSentenceWords = gson.toJson(matrix.cColumnSentenceWords);
+        saveTextFile(pathMetaData + "cColumnSentenceWords", cColumnSentenceWords, ".json");
 
         /// Inverted maps
 
@@ -170,8 +170,8 @@ public class Utils {
         String cColumnDependency = gson.toJson(matrix.cColumnDependency);
         saveTextFile(pathMetaData + "cColumnDependency", cColumnDependency, ".json");
 
-        String cColumnSentence = gson.toJson(matrix.cColumnSentence);
-        saveTextFile(pathMetaData + "cColumnSentence", cColumnSentence, ".json");
+        String cColumnSentence = gson.toJson(matrix.cColumnSentenceHash);
+        saveTextFile(pathMetaData + "cColumnSentenceHash", cColumnSentence, ".json");
 
 
         System.out.println("Done");
@@ -186,6 +186,7 @@ public class Utils {
     }
 
     public static StringBuilder saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix, boolean writeToDisk) throws IOException {
+        FileWriter writer = null;
         System.out.println(pathMMatrix);
         /// Assign StringBuilder with roughly this number of chars: (Number of lines * avg_size_of_a_line) + chars_in_header
         StringBuilder matrixData = new StringBuilder((matrix.getNumberNonZeroElements() * 15) + 72);
@@ -194,18 +195,24 @@ public class Utils {
 //        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
         matrixData.append("%%MatrixMarket matrix coordinate real general\n%\n");
         matrixData.append(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
-        for (int v = 0; v < matrix.getNumberNonZeroElements(); v++) {
-//            writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
-            matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
-        }
-
         if (writeToDisk) {
             File file = new File(pathMMatrix + ".mtx");
             file.createNewFile();
-            FileWriter writer = new FileWriter(file);
-            writer.write(matrixData.toString());
-            writer.close();
+            writer = new FileWriter(file);
+            writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
+            writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
         }
+
+        for (int v = 0; v < matrix.getNumberNonZeroElements(); v++) {
+
+            if (writeToDisk)
+                writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
+            matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
+        }
+
+        if (writeToDisk)
+            writer.close();
+
         System.out.print("Done\n");
         return matrixData;
     }

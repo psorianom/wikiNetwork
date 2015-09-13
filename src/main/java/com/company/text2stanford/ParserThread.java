@@ -23,6 +23,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+import org.maltparser.concurrent.ConcurrentMaltParserModel;
 
 import java.io.*;
 import java.util.*;
@@ -46,13 +47,15 @@ public class ParserThread implements Runnable {
     public StanfordCoreNLP coreParser;
     public Map<String, Tool> mateTools;
     public jni.Parser desrParser;
+    public ConcurrentMaltParserModel maltParser;
     //    Constructor
-    ParserThread(String pathFile, StanfordCoreNLP coreParser, Map mateTools, jni.Parser desrParser) {
+    ParserThread(String pathFile, StanfordCoreNLP coreParser, Map mateTools, jni.Parser desrParser,
+                 ConcurrentMaltParserModel maltParser) {
         this.coreParser = coreParser;
         this.pathFile = pathFile;
         this.mateTools = mateTools;
         this.desrParser = desrParser;
-
+        this.maltParser = maltParser;
     }
     public HashMap<String, String> getAnchors(Elements anchors) {
         HashMap<String, String> anchorMap = new HashMap<>();
@@ -69,9 +72,49 @@ public class ParserThread implements Runnable {
         return anchorMap;
     }
 
-    public Map<Integer, HashMap> parseDeSR(String[] words, String[] lemmas, String[] feats, String[] CPOStags,
-                                           String[] POStags) {
 
+    public Map<Integer, HashMap> parseDeSRCMD(String[] words, String[] lemmas, String[] CPOStags, String[] POStags,
+                                              String[] feats) throws IOException {
+
+        Map<Integer, HashMap> tokenDeps = new Utils.DefaultDict<>(HashMap.class);
+        String desrInput = "";
+        for (int i = 0; i < words.length; i++)
+            desrInput += String.format("%s\t%s\t%s\t%s\t%s\t%s\t_\t_\t_\t_\n", i + 1, words[i], lemmas[i], CPOStags[i],
+                    POStags[i], feats[i]);
+        String modelPath = "./Spanish/spanish.MLP";
+
+        ProcessBuilder builder = new ProcessBuilder("./desr", "-m", modelPath);
+        builder.directory(new File("./resources/"));
+        Process process = builder.start();
+
+        OutputStream stdin = process.getOutputStream();
+        InputStream stdout = process.getInputStream();
+
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(stdout));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stdin));
+//        System.out.println(desrInput);
+        writer.write(desrInput);
+        writer.flush();
+        writer.close();
+
+        Scanner scanner = new Scanner(stdout);
+        while (scanner.hasNextLine()) {
+            String wordParse = scanner.nextLine();
+            if (wordParse.isEmpty())
+                continue;
+            String[] wordParseSplit = wordParse.split("\t");
+            int wordIndex = Integer.parseInt(wordParseSplit[0]);
+            tokenDeps.get(wordIndex).put("relation", wordParseSplit[wordParseSplit.length - 3]);
+            tokenDeps.get(wordIndex).put("headIndex", wordParseSplit[wordParseSplit.length - 4]);
+            tokenDeps.get(wordIndex).put("lemma", wordParseSplit[2]);
+        }
+        return tokenDeps;
+
+    }
+
+
+    public Map<Integer, HashMap> parseDeSR(String[] words, String[] lemmas, String[] CPOStags, String[] POStags,
+                                           String[] feats) {
 
         final String[] atts = {"ID", "FORM", "LEMMA", "CPOSTAG", "POSTAG", "FEATS", "HEAD", "DEPREL"};
         ArrayList<String[]> listAttributesValues = new ArrayList<>();
@@ -108,10 +151,10 @@ public class ParserThread implements Runnable {
 
         for (int i = 0; i < s2.size(); i++) {
             jni.TreeToken currentToken = s2.get(i);
-            int wordIndex = Integer.parseInt(currentToken.getAttribute("ID"));
+            int wordIndex = (int) currentToken.getId();
             tokenDeps.get(wordIndex).put("relation", currentToken.linkLabel());
             tokenDeps.get(wordIndex).put("headIndex", Integer.toString(currentToken.linkHead()));
-            tokenDeps.get(wordIndex).put("lemma", currentToken.getAttribute("LEMMA"));
+//            tokenDeps.get(wordIndex).put("lemma", currentToken.get("LEMMA"));
 
         }
         //        System.out.println("Output:\n" + cc.toString(s2));
@@ -120,8 +163,33 @@ public class ParserThread implements Runnable {
         return tokenDeps;
     }
 
+    public Map<Integer, HashMap> mateTokenDependencies(List<CoreLabel> stanfordTokens) throws IOException {
+        Map<Integer, HashMap> tokenDeps = new Utils.DefaultDict<>(HashMap.class);
+        //This is for mate tools parser
+        //We get the tokens and its posTags
+        Map<String, String[]> StanfordTokensAndPOSTags = getTokensAndPOSTags(stanfordTokens);
 
-    public Map<Integer, HashMap> deSRTokenDependencies(List<CoreLabel> stanfordTokens) {
+        String[] phraseRoot = new String[stanfordTokens.size() + 1];
+        System.arraycopy(StanfordTokensAndPOSTags.get("forms"), 0, phraseRoot, 1, stanfordTokens.size());
+        phraseRoot[0] = CONLLReader09.ROOT;
+
+        SentenceData09 s = new SentenceData09();
+        s.init(phraseRoot);
+        s = mateTools.get("lemmatizer").apply(s);
+//        s = mateTools.get("mtagger").apply(s);
+        s = mateTools.get("POStagger").apply(s);
+        s = mateTools.get("dependencyParser").apply(s);
+        //> This is here is to get the parse info from mate-tools. Unfortunately, mate parser is too slow.
+        for (int k = 0; k < s.length(); k++) {
+            tokenDeps.get(k + 1).put("relation", s.plabels[k]);
+            tokenDeps.get(k + 1).put("headIndex", Integer.toString(s.pheads[k]));
+            tokenDeps.get(k + 1).put("lemma", s.plemmas[k]);
+        }
+
+        return tokenDeps;
+    }
+
+    public Map<Integer, HashMap> deSRTokenDependencies(List<CoreLabel> stanfordTokens) throws IOException {
         /**
          * This function takes the tokens of a phrase, inside a list of strings,  and returns
          * a dictionary of dictionaries: {wordIndex:{ "relation": subj", "headIndex": "2"}, ...}
@@ -129,6 +197,7 @@ public class ParserThread implements Runnable {
          * Using the mate-tools parser and DeSR parser. Mate to get the lemmas and pos tags (which could be get with
          * Stanford parser)
          */
+
 
         //This is for mate tools parser
         //We get the tokens and its posTags
@@ -143,8 +212,8 @@ public class ParserThread implements Runnable {
         s.init(phraseRoot);
         s = mateTools.get("lemmatizer").apply(s);
         s = mateTools.get("mtagger").apply(s);
-
 //        s = mateTools.get("POStagger").apply(s);
+//        s = mateTools.get("dependencyParser").apply(s);
         //> This is here is to get the parse info from mate-tools. Unfortunately, mate parser is too slow.
 //            for (int k = 0; k < s.length(); k++) {
 //
@@ -157,10 +226,11 @@ public class ParserThread implements Runnable {
 
         // This next is for DeSR parser
 
-        Map<Integer, HashMap> tokenDeps = parseDeSR(s.forms, s.plemmas, s.pfeats, StanfordTokensAndPOSTags.get("CPOS"), StanfordTokensAndPOSTags.get("POS"));
+//        Map<Integer, HashMap> tokenDeps = parseDeSRCMD(s.forms, s.plemmas, s.pfeats, StanfordTokensAndPOSTags.get("CPOS"), StanfordTokensAndPOSTags.get("POS"));
+        Map<Integer, HashMap> tokenDeps = parseDeSR(s.forms, s.plemmas, StanfordTokensAndPOSTags.get("CPOS"),
+                StanfordTokensAndPOSTags.get("POS"), s.pfeats);
 
 
-//        s = mateTools.get("dependencyParser").apply(s);
 //
 
         return tokenDeps;
@@ -505,6 +575,16 @@ public class ParserThread implements Runnable {
 
     }
 
+    @Override
+    public void run() {
+        System.out.print("WORKING on " + pathFile + "\n");
+        parseWiki(pathFile);
+//        parseOANCText(pathFile);
+//        parseSemeval2007(pathFile);
+        System.out.println("... DONE");
+
+    }
+
     private void parseWiki(String pathFile) {
         try {
 
@@ -573,11 +653,7 @@ public class ParserThread implements Runnable {
                     String head;
                     String dependency;
                     String lemma;
-//                    ArrayList<CoreLabel> sentenceTokens =(ArrayList) sentence.get(TokensAnnotation.class);
 
-//                    for (int i = 0; i < sentence.size(); i++)
-//                    {
-//                        CoreLabel token = sentenceTokens.get(i);
                     for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
                         // this is the text of the token
                         String word = token.get(TextAnnotation.class);
@@ -617,16 +693,6 @@ public class ParserThread implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void run() {
-        System.out.print("WORKING on " + pathFile + "\n");
-        parseWiki(pathFile);
-//        parseOANCText(pathFile);
-//        parseSemeval2007(pathFile);
-        System.out.println("... DONE");
-
     }
 }
 
