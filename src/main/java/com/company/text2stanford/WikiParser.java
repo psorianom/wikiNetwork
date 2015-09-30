@@ -1,9 +1,7 @@
 package com.company.text2stanford;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import is2.data.InstancesTagger;
-import is2.data.SentenceData09;
-import is2.io.CONLLReader09;
+import edu.upc.freeling.*;
 import is2.lemmatizer.Lemmatizer;
 import is2.tag.Tagger;
 import is2.tools.Tool;
@@ -17,7 +15,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.company.stanford2matrix.Utils.removeAlreadyParsedFolders;
 import static com.company.text2stanford.Utils.listFiles;
@@ -97,16 +94,69 @@ public class WikiParser {
 
     }
 
+    public static Map<String, Object> createFreelingParser() {
+        Map<String, Object> freelingParsers = new HashMap<>();
+        System.loadLibrary("freeling_javaAPI");
+        final String DATA = "./resources/";
+        final String LANG = "es";
+        Util.initLocale("default");
+
+        // Create options set for maco analyzer.
+        // Default values are Ok, except for data files.
+        MacoOptions op = new MacoOptions(LANG);
+
+        op.setActiveModules(false, true, true, true,
+                true, true, true,
+                true, true, true);
+
+        op.setDataFiles(
+                "",
+                DATA + LANG + "/locucions.dat",
+                DATA + LANG + "/quantities.dat",
+                DATA + LANG + "/afixos.dat",
+                DATA + LANG + "/probabilitats.dat",
+                DATA + LANG + "/dicc.src",
+                DATA + LANG + "/np.dat",
+                DATA + "common/punct.dat");
+
+        // Create analyzers.
+//        LangIdent lgid = new LangIdent(DATA + "/common/lang_ident/ident-few.dat");
+
+        Tokenizer tk = new Tokenizer(DATA + LANG + "/tokenizer.dat");
+        Splitter sp = new Splitter(DATA + LANG + "/splitter.dat");
+        ChartParser constituent = new ChartParser(DATA + LANG + "/chunker/grammar-chunk.dat");
+        Maco mf = new Maco(op);
+        freelingParsers.put("tokenizer", tk);
+        freelingParsers.put("splitter", sp);
+        freelingParsers.put("mtag", mf);
+        freelingParsers.put("constit", constituent);
+        return freelingParsers;
+
+    }
+
+    public static ConcurrentMaltParserModel createMaltParser(String modelPath) {
+        ConcurrentMaltParserModel model = null;
+        try {
+            URL swemaltMiniModelURL = new File(modelPath).toURI().toURL();
+            model = ConcurrentMaltParserService.initializeParserModel(swemaltMiniModelURL);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return model;
+    }
+
     public void run() throws InterruptedException {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject(wikiLanguage);
         Map<String, Tool> mateParser = new HashMap<>();
         jni.Parser desrParser = null;
         ConcurrentMaltParserModel maltParser = null;
+        Map<String, Object> freelingParser = null;
         if (!wikiLanguage.equals("en")) {
-            mateParser = createMateTools(wikiLanguage);
-            desrParser = createDeSRParser("./resources/Spanish/spanish.MLP");
-            maltParser = createMaltParser("./resources/Spanish/");
+//            mateParser = createMateTools(wikiLanguage);
+//            desrParser = createDeSRParser("./resources/Spanish/spanish.MLP");
+            maltParser = createMaltParser("./resources/Spanish/espmalt-1.0.mco");
+            freelingParser = createFreelingParser();
         }
         ArrayList<String> listPaths = listFiles(inputFolderPath);
         listPaths = removeAlreadyParsedFolders(listPaths, pickupFolder, folderLimit);
@@ -118,9 +168,9 @@ public class WikiParser {
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/DU/wiki_12");
 
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
-        ParserThread.lock = new ReentrantLock();
+//        ParserThread.lock = new ReentrantLock();
         for (String path : listPaths) {
-            Runnable worker = new ParserThread(path, nlpPipe, mateParser, desrParser, maltParser);
+            Runnable worker = new ParserThread(path, nlpPipe, mateParser, desrParser, maltParser, freelingParser);
             //worker will execute its "run()" function
             executor.execute(worker);
         }
@@ -140,17 +190,6 @@ public class WikiParser {
         jni.Parser elParser = jni.Parser.create(model);
         return elParser;
 
-    }
-
-    public ConcurrentMaltParserModel createMaltParser(String modelPath) {
-        ConcurrentMaltParserModel model = null;
-        try {
-            URL swemaltMiniModelURL = new File(modelPath).toURI().toURL();
-            model = ConcurrentMaltParserService.initializeParserModel(swemaltMiniModelURL);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return model;
     }
 
     public Map<String, Tool> createMateTools(String lang) {
@@ -176,8 +215,8 @@ public class WikiParser {
         System.out.println("\nLoading mate-tools parser...\n\n");
         String modelName = "./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.parser.model";
         is2.parser.Options opts = new is2.parser.Options(new String[]{"-model", modelName});
-
         Tool parser = new is2.parser.Parser(opts);
+
         tools.put("lemmatizer", lemmatizer);
         tools.put("mtagger", morphoTagger);
         tools.put("POStagger", posTagger);

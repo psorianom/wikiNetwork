@@ -40,7 +40,7 @@ public class MatrixMaker {
             dataPath = "../data/these_graph/oanc/corpus";
 //            dataPath = "/home_nfs/eric/esorianomorales/wikitest/extracted/BL";
 //            dataPath = "/media/stuff/temp/extracted/BL";
-//            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
+            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
 
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";

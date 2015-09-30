@@ -50,6 +50,13 @@
             <systemPath>${project.build.directory}/dependency/anna-3.3.jar</systemPath>
         </dependency>
         <dependency>
+            <groupId>edu.upc.freeling</groupId>
+            <artifactId>freeling</artifactId>
+            <version>3.1</version>
+            <scope>system</scope>
+            <systemPath>${project.build.directory}/dependency/freeling.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>org.maltparser</groupId>
             <artifactId>maltparser</artifactId>
             <version>1.8</version>

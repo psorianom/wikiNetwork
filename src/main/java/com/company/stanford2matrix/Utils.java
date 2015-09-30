@@ -185,7 +185,7 @@ public class Utils {
 
     }
 
-    public static StringBuilder saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix, boolean writeToDisk) throws IOException {
+    public static StringBuilder buildMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix, boolean writeToDisk) throws IOException {
         FileWriter writer = null;
         System.out.println(pathMMatrix);
         /// Assign StringBuilder with roughly this number of chars: (Number of lines * avg_size_of_a_line) + chars_in_header
@@ -195,6 +195,24 @@ public class Utils {
 //        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
         matrixData.append("%%MatrixMarket matrix coordinate real general\n%\n");
         matrixData.append(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
+
+
+        for (int v = 0; v < matrix.getNumberNonZeroElements(); v++) {
+
+            matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
+        }
+
+        System.out.print("Done\n");
+        return matrixData;
+    }
+
+    public static void saveMatrixMarketFormat(String pathMMatrix, MatrixContainer matrix, boolean writeToDisk) throws IOException {
+        FileWriter writer = null;
+        System.out.println(pathMMatrix);
+        /// Assign StringBuilder with roughly this number of chars: (Number of lines * avg_size_of_a_line) + chars_in_header
+        System.out.print("\nWriting Matrix Market Format matrix... ");
+//        writer.write("%%MatrixMarket matrix coordinate real general\n%\n");
+//        writer.write(String.format("%d\t%d\t%d\n", matrix.getNumberRows(), matrix.getNumberColumns(), matrix.getNumberNonZeroElements()));
         if (writeToDisk) {
             File file = new File(pathMMatrix + ".mtx");
             file.createNewFile();
@@ -205,16 +223,12 @@ public class Utils {
 
         for (int v = 0; v < matrix.getNumberNonZeroElements(); v++) {
 
-            if (writeToDisk)
                 writer.write(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
-            matrixData.append(String.format("%d\t%d\t%d\n", matrix.cRows.get(v), matrix.cCols.get(v), matrix.cData.get(v)));
         }
 
-        if (writeToDisk)
-            writer.close();
+        writer.close();
 
         System.out.print("Done\n");
-        return matrixData;
     }
 
 
