@@ -149,7 +149,7 @@ public class MatrixMaker {
         } else {
             matrix.cSentenceHashColumn.put(hashcode, ++column_j);
             matrix.cColumnSentenceHash.put(column_j, Integer.toString(hashcode)); ///> We save the inverted index
-            matrix.cColumnSentenceWords.put(column_j, phrase);
+//            matrix.cColumnSentenceWords.put(column_j, phrase);
             matrix.cSentenceDataVectorIndex.put(column_j, matrix.cCols.size());
             for (int i = 0; i < listTokens.size(); i++) {
                 matrix.cRows.add(this.matrix.cTokenRow.get(listTokens.get(i)));
@@ -736,8 +736,8 @@ public class MatrixMaker {
                 //Here we add the ngrams columns
 //                addNgramsColumns(lListTokensPOSSeen, 3);
 
-                if (this.matrix.cRows.size() != this.matrix.cCols.size())
-                    throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
+//                if (this.matrix.cRows.size() != this.matrix.cCols.size())
+//                    throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
 
                 /** Here we save the information about the columns, and the constituents each phrase is made of
                  * **/
