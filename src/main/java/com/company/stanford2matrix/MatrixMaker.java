@@ -40,7 +40,7 @@ public class MatrixMaker {
             dataPath = "../data/these_graph/oanc/corpus";
 //            dataPath = "/home_nfs/eric/esorianomorales/wikitest/extracted/BL";
 //            dataPath = "/media/stuff/temp/extracted/BL";
-            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
+//            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/AA";
 
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
@@ -130,13 +130,14 @@ public class MatrixMaker {
 //        System.out.println(listTokens.hashCode());
 //        Set<String> hashTokens = new HashSet<>(listTokens);
 //        listTokens = new ArrayList<>(hashTokens);
+
         String phrase = String.join(" ", listTokens);
         int hashcode;
         if (hashLength > 0)
             hashcode = listTokens.hashCode() % hashLength;
         else {
-//            hashcode = listTokens.hashCode();
-            hashcode = this.matrix.sentenceID;
+            hashcode = listTokens.hashCode();
+//            hashcode = this.matrix.sentenceID; // if I assign the hashcode equal to sentenceID, I will always have different sentences = no counts
             this.matrix.sentenceID++;
         }
         int lSentenceDataIndex;

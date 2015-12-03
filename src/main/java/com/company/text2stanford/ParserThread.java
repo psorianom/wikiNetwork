@@ -716,7 +716,11 @@ public class ParserThread implements Runnable {
 
                 // Parse the document with CoreNLP
 //                docText = "A great brigand becomes a ruler of a Nation";
+                docText = "The mouse eats the cheese.";
+//                docText = "The cat eats the mouse.";
 //                docText = "En el tramo de Telefónica un toro descolgado ha creado peligro tras embestir contra un grupo de mozos.";
+                docText = "The reports indicate that the meetings hit a snag quickly.";
+                docText = "The report contains copies of the minutes of these meetings.";
 
                 Annotation document = new Annotation(docText);
 
@@ -783,7 +787,8 @@ public class ParserThread implements Runnable {
                         // this is the parse tree of the current sentence
                         Tree tree = sentence.get(TreeAnnotation.class);
                         String pennString = tree.pennString();
-//                    System.out.println(sentence.toString());
+                        System.out.println(sentence.toString());
+                        System.out.println(pennString);
                         HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
                         Map<Integer, HashMap> dependencyTokens = null;
                         //> Here we determine which dependency parser to use according to the language. We also find the lemmas.
@@ -792,6 +797,7 @@ public class ParserThread implements Runnable {
 
                             // this is the dependency graph of the current sentence
                             SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                            System.out.println(dependencies.toList());
                             dependencyTokens = coreNLPTokenDependencies(dependencies);
                         } else {//Otherwise, we use the mate and DeSR parsers.
 

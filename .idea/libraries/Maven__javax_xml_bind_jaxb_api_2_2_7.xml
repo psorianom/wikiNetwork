@@ -2,7 +2,6 @@
   <library name="Maven: javax.xml.bind:jaxb-api:2.2.7">
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/javax/xml/bind/jaxb-api/2.2.7/jaxb-api-2.2.7.jar!/" />
-      <root url="file://$PROJECT_DIR$/src/main/resources" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$MAVEN_REPOSITORY$/javax/xml/bind/jaxb-api/2.2.7/jaxb-api-2.2.7-javadoc.jar!/" />
