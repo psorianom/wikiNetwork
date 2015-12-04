@@ -148,16 +148,6 @@ public class WikiParser {
     public void run() throws InterruptedException {
         long start = System.nanoTime();
         StanfordCoreNLP nlpPipe = createCoreNLPObject(wikiLanguage);
-        Map<String, Tool> mateParser = new HashMap<>();
-        jni.Parser desrParser = null;
-        ConcurrentMaltParserModel maltParser = null;
-        Map<String, Object> freelingParser = null;
-        if (!wikiLanguage.equals("en")) {
-//            mateParser = createMateTools(wikiLanguage);
-//            desrParser = createDeSRParser("./resources/Spanish/spanish.MLP");
-            maltParser = createMaltParser("./resources/Spanish/espmalt-1.0.mco");
-            freelingParser = createFreelingParser();
-        }
         ArrayList<String> listPaths = listFiles(inputFolderPath);
         listPaths = removeAlreadyParsedFolders(listPaths, pickupFolder, folderLimit);
 
@@ -170,7 +160,7 @@ public class WikiParser {
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
 //        ParserThread.lock = new ReentrantLock();
         for (String path : listPaths) {
-            Runnable worker = new ParserThread(path, nlpPipe, mateParser, desrParser, maltParser, freelingParser);
+            Runnable worker = new ParserThread(path, nlpPipe);
             //worker will execute its "run()" function
             executor.execute(worker);
         }
