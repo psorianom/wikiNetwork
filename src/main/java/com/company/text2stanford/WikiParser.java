@@ -94,56 +94,7 @@ public class WikiParser {
 
     }
 
-    public static Map<String, Object> createFreelingParser() {
-        Map<String, Object> freelingParsers = new HashMap<>();
-        System.loadLibrary("freeling_javaAPI");
-        final String DATA = "./resources/";
-        final String LANG = "es";
-        Util.initLocale("default");
 
-        // Create options set for maco analyzer.
-        // Default values are Ok, except for data files.
-        MacoOptions op = new MacoOptions(LANG);
-
-        op.setActiveModules(false, true, true, true,
-                true, true, true,
-                true, true, true);
-
-        op.setDataFiles(
-                "",
-                DATA + LANG + "/locucions.dat",
-                DATA + LANG + "/quantities.dat",
-                DATA + LANG + "/afixos.dat",
-                DATA + LANG + "/probabilitats.dat",
-                DATA + LANG + "/dicc.src",
-                DATA + LANG + "/np.dat",
-                DATA + "common/punct.dat");
-
-        // Create analyzers.
-//        LangIdent lgid = new LangIdent(DATA + "/common/lang_ident/ident-few.dat");
-
-        Tokenizer tk = new Tokenizer(DATA + LANG + "/tokenizer.dat");
-        Splitter sp = new Splitter(DATA + LANG + "/splitter.dat");
-        ChartParser constituent = new ChartParser(DATA + LANG + "/chunker/grammar-chunk.dat");
-        Maco mf = new Maco(op);
-        freelingParsers.put("tokenizer", tk);
-        freelingParsers.put("splitter", sp);
-        freelingParsers.put("mtag", mf);
-        freelingParsers.put("constit", constituent);
-        return freelingParsers;
-
-    }
-
-    public static ConcurrentMaltParserModel createMaltParser(String modelPath) {
-        ConcurrentMaltParserModel model = null;
-        try {
-            URL swemaltMiniModelURL = new File(modelPath).toURI().toURL();
-            model = ConcurrentMaltParserService.initializeParserModel(swemaltMiniModelURL);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return model;
-    }
 
     public void run() throws InterruptedException {
         long start = System.nanoTime();

@@ -1,6 +1,5 @@
 package com.company.text2stanford;
 
-import com.company.stanford2matrix.Utils;
 import edu.stanford.nlp.ling.CoreAnnotations.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -11,12 +10,8 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
-import edu.upc.freeling.*;
-import is2.data.SentenceData09;
-import is2.io.CONLLReader09;
 import is2.tools.Tool;
 
-import jni.Token;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.jsoup.Jsoup;
@@ -25,17 +20,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.maltparser.concurrent.ConcurrentMaltParserModel;
-import org.maltparser.concurrent.ConcurrentUtils;
-import org.maltparser.concurrent.graph.ConcurrentDependencyGraph;
-import org.maltparser.concurrent.graph.ConcurrentDependencyNode;
-import org.maltparser.core.exception.MaltChainedException;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
-
-import static com.company.text2stanford.WikiParser.createFreelingParser;
-import static com.company.text2stanford.WikiParser.createMaltParser;
 
 /**
  * Created by pavel on 16/12/14.
@@ -57,7 +45,6 @@ public class ParserThread implements Runnable {
     ParserThread(String pathFile, StanfordCoreNLP coreParser) {
         this.coreParser = coreParser;
         this.pathFile = pathFile;
-        this.mateTools = mateTools;
     }
 
 
@@ -233,7 +220,7 @@ public class ParserThread implements Runnable {
 
     }
 
-    private void parseSemeval2010(String pathFile) {
+    private void parseSemeval2007(String pathFile) {
         try {
 
             File input = new File(pathFile);
@@ -321,89 +308,88 @@ public class ParserThread implements Runnable {
             e.printStackTrace();
         }
     }
-    private void parseSemeval2007(String pathFile) {
-        try {
 
+    private void parseSemeval2010(String pathFile, Boolean test) {
+        try {
+            String datasetType = "";
+            if (test)
+                datasetType = ".test";
+                
+            
             File input = new File(pathFile);
             InputStream xmlFile = new FileInputStream(input);
             String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
-
+            String tagetWord = input.getName().substring(0, input.getName().length() - 4) + datasetType;
+            
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
             Document doc = Jsoup.parse(xmlFile, "UTF-8", "", Parser.xmlParser());
 
             bufferedOut.write("FILENAME\t" + input.getName() + nline);
             bufferedOut.write(header + nline);
 
-
+            Elements twInstances = doc.getElementsByTag(tagetWord).first().children();
             //Foreach lexical element "lexelt"
-            Elements lexelts = doc.getElementsByTag("lexelt");
-            for (Element lx : lexelts) {
-                String lexeltName = lx.attr("item");
-                bufferedOut.write("%%#LEXELT\t" + lexeltName + nline);
+            for (Element ins : twInstances) {
+                String instanceName = ins.nodeName();
+                bufferedOut.write("%%#INSTANCE\t" + instanceName + nline);
+                String textToParse = ins.text();
 
-                Elements instances = lx.getElementsByTag("instance");
-                for (Element ins : instances) {
-                    String instanceName = ins.attr("id");
-                    bufferedOut.write("%%#INSTANCE\t" + instanceName + nline);
-                    String textToParse = ins.text();
+                Annotation document = new Annotation(textToParse);
+                coreParser.annotate(document);
+                // Treat the result
+                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                int sentenceId = 0;
+                for (CoreMap sentence : sentences) {
 
-                    Annotation document = new Annotation(textToParse);
-                    coreParser.annotate(document);
-                    // Treat the result
-                    List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-                    int sentenceId = 0;
-                    for (CoreMap sentence : sentences) {
-
-                        List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
-                        int sentenceSize = listTokens.size();
-                        String line;
+                    List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
+                    int sentenceSize = listTokens.size();
+                    String line;
                         sentenceId++;
-                        bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + nline);
+                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + nline);
 
-                        // this is the parse tree of the current sentence
-                        Tree tree = sentence.get(TreeAnnotation.class);
-                        HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
+                    // this is the parse tree of the current sentence
+                    Tree tree = sentence.get(TreeAnnotation.class);
+                    HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
 
-                        // this is the dependency graph of the current sentence
-                        SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                        HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
+                    // this is the dependency graph of the current sentence
+                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                    HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
-                        // traversing the words in the current sentence
-                        // a CoreLabel is a CoreMap with additional token-specific methods
-                        String head;
-                        String dependency;
-                        for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+                    // traversing the words in the current sentence
+                    // a CoreLabel is a CoreMap with additional token-specific methods
+                    String head;
+                    String dependency;
+                    for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
 
-                            // this is the string of the token
-                            String word = token.get(TextAnnotation.class);
-                            // this is the index of said token
-                            int wordIndex = token.get(IndexAnnotation.class);
-                            // this is the POS tag of the token
-                            String pos = token.get(PartOfSpeechAnnotation.class);
-                            // this is the  lemma of the token
-                            String lemma = token.get(LemmaAnnotation.class);
-                            // this is the constituency information of the token
-                            String constituency = String.join(",", constituencyTokens.get(wordIndex));
-                            // this is the constituency information of the token
-                            // the head first
-                            if (dependencyTokens.get(wordIndex) == null) {
-                                head = "0";
-                                dependency = "PUNCT";
-                            } else {
-                                head = (String) dependencyTokens.get(wordIndex).get("headIndex");
-                                // the relation (dependency label)
-                                dependency = (String) dependencyTokens.get(wordIndex).get("relation");
-                            }
-                            // create the line that will be written in the output
-                            line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
-                            bufferedOut.write(line);
-
+                        // this is the string of the token
+                        String word = token.get(TextAnnotation.class);
+                        // this is the index of said token
+                        int wordIndex = token.get(IndexAnnotation.class);
+                        // this is the POS tag of the token
+                        String pos = token.get(PartOfSpeechAnnotation.class);
+                        // this is the  lemma of the token
+                        String lemma = token.get(LemmaAnnotation.class);
+                        // this is the constituency information of the token
+                        String constituency = String.join(",", constituencyTokens.get(wordIndex));
+                        // this is the constituency information of the token
+                        // the head first
+                        if (dependencyTokens.get(wordIndex) == null) {
+                            head = "0";
+                            dependency = "PUNCT";
+                        } else {
+                            head = (String) dependencyTokens.get(wordIndex).get("headIndex");
+                            // the relation (dependency label)
+                            dependency = (String) dependencyTokens.get(wordIndex).get("relation");
                         }
+                        // create the line that will be written in the output
+                        line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
+                        bufferedOut.write(line);
 
-                    }//foreach sentence
-                }//foreach instance
-            }//foreach lexelt
+                    }
+
+                }//foreach sentence
+            }//foreach instance
             bufferedOut.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -507,10 +493,10 @@ public class ParserThread implements Runnable {
     @Override
     public void run() {
         System.out.print("WORKING on " + pathFile + "\n");
-        parseWiki(pathFile);
+//        parseWiki(pathFile);
 //        parseOANCText(pathFile);
-        parseSemeval2007(pathFile);
-        parseSemeval2010(pathFile);
+//        parseSemeval2007(pathFile);
+        parseSemeval2010(pathFile, true);
         System.out.println("... DONE");
 
     }
