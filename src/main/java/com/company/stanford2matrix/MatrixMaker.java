@@ -533,25 +533,27 @@ public class MatrixMaker {
         ArrayList<String> lListAllTokensPOS;
         Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex;
         int ii = 0;
-        String targetWord = null;
+
         String instanceID = null;
         if (instances.get(0).equals(""))
             instances.remove(0);
 
+        String targetWord = instances.get(0).split("\n")[0];
+        targetWord = targetWord.split("\\.")[0] + "." + targetWord.split("\\.")[1];
+
         Map<String, Map<String, MatrixContainer>> lTargetWordInstancesMatrices = new HashMap<>();
+        lTargetWordInstancesMatrices.put(targetWord, new HashMap<>());
+
         for (String inst : instances) {
             ii++;
 //            ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE")));
             ArrayList<String> sentences = new ArrayList(Arrays.asList(inst.split("%%#SEN\t")));
-            targetWord = sentences.get(0).trim().split("\\.")[0] + "." + sentences.get(0).trim().split("\\.")[1];
 
 //            String twPOStag = targetWordInfo[1];
 //            System.out.println("Target word: " + ":\t" + targetWord);
             instanceID = sentences.get(0).trim();
             System.out.println("\tinstance: " + instanceID);
             sentences.remove(0);
-
-            lTargetWordInstancesMatrices.put(targetWord, new HashMap<>());
 
             this.matrix = new MatrixContainer();
 
@@ -748,18 +750,19 @@ public class MatrixMaker {
 
             }//for each sentence
             /// Save the inverted indices
-        }
-        this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);
-        this.matrix.cTokenPOS = invertMapOfLists(this.matrix.cPOSToken);
-        /// Save the market format matrix also
+
+            this.matrix.cColumnSubClause = invertMapOfSets(this.matrix.cSubClausesColumns);
+            this.matrix.cTokenPOS = invertMapOfLists(this.matrix.cPOSToken);
+            /// Save the market format matrix also
 //                this.matrix.cMarketFormatMatrix = saveMatrixMarketFormat(pathFolder + "/../matrix/MMMatrix", this.matrix, false);
-        ///> Delete the row, cols and data arrays to save space. UPDATE: This is not a good idea. I can generate
-        /// the matrix faster with just the arrays.
+            ///> Delete the row, cols and data arrays to save space. UPDATE: This is not a good idea. I can generate
+            /// the matrix faster with just the arrays.
 //                this.matrix.cRows.clear();
 //                this.matrix.cCols.clear();
 //                this.matrix.cData.clear();
 //                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, new JSONGraphContainer(matrix));
-        lTargetWordInstancesMatrices.get(targetWord).put(instanceID, this.matrix);
+            lTargetWordInstancesMatrices.get(targetWord).put(instanceID, this.matrix);
+        }
         //}//for each instance
         Gson gson = new Gson();
             System.out.print("Saving " + targetWord + " JSON file...");
