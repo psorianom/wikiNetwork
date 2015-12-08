@@ -543,8 +543,7 @@ public class MatrixMaker {
             ii++;
 //            ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE")));
             ArrayList<String> sentences = new ArrayList(Arrays.asList(inst.split("%%#SEN\t")));
-            targetWord = sentences.get(0).trim();
-            targetWord = targetWord.substring(0, targetWord.length() - 4);
+            targetWord = sentences.get(0).trim().split("\\.")[0] + "." + sentences.get(0).trim().split("\\.")[1];
 
 //            String twPOStag = targetWordInfo[1];
 //            System.out.println("Target word: " + ":\t" + targetWord);
