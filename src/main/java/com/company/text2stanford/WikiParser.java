@@ -1,16 +1,7 @@
 package com.company.text2stanford;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.upc.freeling.*;
-import is2.lemmatizer.Lemmatizer;
-import is2.tag.Tagger;
-import is2.tools.Tool;
 import org.apache.commons.cli.*;
-import org.maltparser.concurrent.ConcurrentMaltParserModel;
-import org.maltparser.concurrent.ConcurrentMaltParserService;
-
-import java.io.File;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -125,47 +116,7 @@ public class WikiParser {
         System.out.printf("Tasks took %.3f m to run%n", time / (60 * 1e9));
     }
 
-    public jni.Parser createDeSRParser(String model) {
-        System.out.println("\nLoading DeSR dependency parser...\n\n");
-        System.loadLibrary("jdesr");
-        jni.Parser elParser = jni.Parser.create(model);
-        return elParser;
 
-    }
-
-    public Map<String, Tool> createMateTools(String lang) {
-        if (lang.equals("es"))
-            lang = "Spanish";
-        else
-            lang = "French";
-
-        Map<String, Tool> tools = new HashMap<>();
-
-        // Lemmatizer
-        System.out.println("\nLoading mate-tools lemmatizer...\n\n");
-        Tool lemmatizer = new Lemmatizer("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.lemmatizer.model");
-
-        // Morphology tagger
-        System.out.println("\nLoading mate-tools morphology tagger...\n\n");
-        is2.mtag.Tagger morphoTagger = new is2.mtag.Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.morphtagger.model");
-        // POStagger
-        System.out.println("\nLoading mate-tools POS tagger...\n\n");
-        Tool posTagger = new Tagger("./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.postagger.model");
-
-        // Parser
-        System.out.println("\nLoading mate-tools parser...\n\n");
-        String modelName = "./resources/" + lang + "/CoNLL2009-ST-" + lang + "-ALL.anna-3.3.parser.model";
-        is2.parser.Options opts = new is2.parser.Options(new String[]{"-model", modelName});
-        Tool parser = new is2.parser.Parser(opts);
-
-        tools.put("lemmatizer", lemmatizer);
-        tools.put("mtagger", morphoTagger);
-        tools.put("POStagger", posTagger);
-        tools.put("dependencyParser", parser);
-        System.out.println("\nFinished loading mate-tools...\n");
-        return tools;
-
-    }
 
     public StanfordCoreNLP createCoreNLPObject(String lang) {
         Properties props = new Properties();
