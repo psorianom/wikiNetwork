@@ -549,8 +549,8 @@ public class ParserThread implements Runnable {
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
                     String pennString = tree.pennString();
-                    System.out.println(sentence.toString());
-                    System.out.println(pennString);
+//                    System.out.println(sentence.toString());
+//                    System.out.println(pennString);
                     HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
                     Map<Integer, HashMap> dependencyTokens = null;
                     //> Here we determine which dependency parser to use according to the language. We also find the lemmas.
@@ -558,7 +558,7 @@ public class ParserThread implements Runnable {
 
                     // this is the dependency graph of the current sentence
                     SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                    System.out.println(dependencies.toList());
+//                    System.out.println(dependencies.toList());
                     dependencyTokens = coreNLPTokenDependencies(dependencies);
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
