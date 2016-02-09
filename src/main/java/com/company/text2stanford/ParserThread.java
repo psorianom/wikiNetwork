@@ -10,7 +10,6 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
-import is2.tools.Tool;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -19,7 +18,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
-import org.maltparser.concurrent.ConcurrentMaltParserModel;
 
 import java.io.*;
 import java.util.*;
@@ -37,10 +35,6 @@ public class ParserThread implements Runnable {
     public final String header = "token\tlemma\tPOS\tconstituency\thead\tdependency";
     public String pathFile;
     public StanfordCoreNLP coreParser;
-    public Map<String, Tool> mateTools;
-    public jni.Parser desrParser;
-    public ConcurrentMaltParserModel maltParser;
-    public Map<String, Object> freelingParser;
     //    Constructor
     ParserThread(String pathFile, StanfordCoreNLP coreParser) {
         this.coreParser = coreParser;
@@ -493,10 +487,10 @@ public class ParserThread implements Runnable {
     @Override
     public void run() {
         System.out.print("WORKING on " + pathFile + "\n");
-//        parseWiki(pathFile);
+        parseWiki(pathFile);
 //        parseOANCText(pathFile);
 //        parseSemeval2007(pathFile);
-        parseSemeval2010(pathFile, true);
+//        parseSemeval2010(pathFile, true);
         System.out.println("... DONE");
 
     }
