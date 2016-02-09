@@ -524,11 +524,11 @@ public class ParserThread implements Runnable {
 
                 // Parse the document with CoreNLP
 //                docText = "A great brigand becomes a ruler of a Nation";
-                docText = "The mouse eats the cheese.";
+//                docText = "The mouse eats the cheese.";
 //                docText = "The cat eats the mouse.";
 //                docText = "En el tramo de Telefónica un toro descolgado ha creado peligro tras embestir contra un grupo de mozos.";
-                docText = "The reports indicate that the meetings hit a snag quickly.";
-                docText = "The report contains copies of the minutes of these meetings.";
+//                docText = "The reports indicate that the meetings hit a snag quickly.";
+//                docText = "The report contains copies of the minutes of these meetings.";
 
                 Annotation document = new Annotation(docText);
 
