@@ -46,11 +46,11 @@ public class MatrixMaker {
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
             myMaker.setDataPath(dataPath);
             myMaker.runParseCorpus(true);
-        } else if (mode.equals("semeval_2007")) {
+        } else if (mode.equals("semeval2007")) {
             dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/";
             myMaker.setDataPath(dataPath);
             myMaker.runParseSemeval2007();
-        } else if (mode.equals("semeval_2010")) {
+        } else if (mode.equals("semeval2010")) {
             dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2010/test_data/";
             myMaker.setDataPath(dataPath);
             myMaker.runParseSemeval2010();
@@ -294,7 +294,7 @@ public class MatrixMaker {
             ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE\t")));
             String targetWordID = instances.get(0).trim();
 //            String twPOStag = targetWordInfo[1];
-            System.out.println("Target word: " + ii + targetWordID);
+            System.out.println("Target word: " + ii + " " + targetWordID);
             instances.remove(0);
             lTargetWordInstancesMatrices.put(targetWordID, new HashMap<>());
 
@@ -306,9 +306,9 @@ public class MatrixMaker {
 
                 //TODO: Change this "SEN " to "SEN\t", but first re-run the stanford2matrix parser with this modif.
                 ArrayList<String> sentences = new ArrayList(Arrays.asList(in.split("%%#SEN ")));
-//                String instanceID = sentences.get(0).trim();
-//                System.out.println("\tinstance: " + instanceID);
-//                sentences.remove(0);
+                String instanceID = sentences.get(0).trim();
+                System.out.println("\tinstance: " + instanceID);
+                sentences.remove(0);
 
 
                 for (String s : sentences) {
@@ -510,7 +510,7 @@ public class MatrixMaker {
 //                this.matrix.cCols.clear();
 //                this.matrix.cData.clear();
 //                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, new JSONGraphContainer(matrix));
-                lTargetWordInstancesMatrices.get(targetWordID).put(targetWordID, this.matrix);
+                lTargetWordInstancesMatrices.get(targetWordID).put(instanceID, this.matrix);
             }//for each instance
             Gson gson = new Gson();
             System.out.print("Saving " + targetWordID + " JSON file...");
@@ -846,11 +846,15 @@ public class MatrixMaker {
                         continue;
                     lListAllTokensPOS.add(token_pos);
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
-                    if (dependency.equals("PUNCT") || !constituency.contains("NP"))
+                    if (dependency.equals("PUNCT"))
                         continue;
+//                    if (!constituency.contains("NP"))
+//                        continue;
+//                    if (!constituency.contains("VP"))
+//                        continue;
 
                     //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
-                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj")) {
+                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj") || dependency.equals("iobj")) {
 //                        lDictDependencyHeadIndex.get(token_pos).add(new HashMap<String, Integer>(){{put(dependency, Integer.parseInt(dependencyHead));}});
                         lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
                     }

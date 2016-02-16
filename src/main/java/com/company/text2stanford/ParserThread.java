@@ -487,8 +487,8 @@ public class ParserThread implements Runnable {
     @Override
     public void run() {
         System.out.print("WORKING on " + pathFile + "\n");
-        parseWiki(pathFile);
-//        parseOANCText(pathFile);
+//        parseWiki(pathFile);
+        parseOANCText(pathFile);
 //        parseSemeval2007(pathFile);
 //        parseSemeval2010(pathFile, true);
         System.out.println("... DONE");
