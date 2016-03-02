@@ -178,6 +178,11 @@ public class MatrixMaker {
             for (ArrayList<String> relation : listRelations) {
                 String dependency = relation.get(0);
                 int headIndex = Integer.parseInt(relation.get(1));
+                String headWord = "";
+                if (dependency.equals("root"))
+                    headWord = "SENTENCE";
+                else
+                    headWord = listTokens.get(headIndex - 1);
                 dependencyName = dependency + "_of_" + listTokens.get(headIndex - 1); ///>Have to remove one cause listokens is 0 index based
 
                 if (this.matrix.cDependencyColumn.containsKey(dependencyName)) {
@@ -854,10 +859,10 @@ public class MatrixMaker {
 //                        continue;
 
                     //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
-                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj") || dependency.equals("iobj")) {
+//                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj") || dependency.equals("iobj")) {
 //                        lDictDependencyHeadIndex.get(token_pos).add(new HashMap<String, Integer>(){{put(dependency, Integer.parseInt(dependencyHead));}});
-                        lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
-                    }
+                    lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
+//                    }
 
                     /***
                      * 1. Get the token and store it in a dictionary string:int, with its row index as value:
@@ -1116,7 +1121,7 @@ public class MatrixMaker {
                         "Number of unique types of clauses: %d\n" +
                         "Number of non-zero values: %d\n" +
                         "Sparsity: %f %%\n",
-                this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().size(), this.matrix.getNumberNonZeroElements(),
+                this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().toString(), this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
 
 
