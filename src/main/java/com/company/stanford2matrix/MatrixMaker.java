@@ -88,7 +88,7 @@ public class MatrixMaker {
         LinkedHashMap<Integer, String> npPosition = new LinkedHashMap<>();
         Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
-            if (clauses.get(i).contains("NP")) {
+            if (clauses.get(i).contains("NP") || clauses.get(i).contains("VP")) {
                 npPosition.put(i, clauses.get(i));
             }
         return npPosition;
@@ -98,7 +98,7 @@ public class MatrixMaker {
         LinkedHashMap<Integer, String> npHash = new LinkedHashMap<>();
 //        Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
-            if (clauses.get(i).contains("NP")) {
+            if (clauses.get(i).contains("NP") || clauses.get(i).contains("VP")) {
 //                ArrayList<String> sublisto = new ArrayList<>(clauses.subList(0, i + 1));
                 npHash.put(clauses.subList(0, i + 1).hashCode() % 1000, clauses.get(i));
 
@@ -183,7 +183,7 @@ public class MatrixMaker {
                     headWord = "SENTENCE";
                 else
                     headWord = listTokens.get(headIndex - 1);
-                dependencyName = dependency + "_of_" + listTokens.get(headIndex - 1); ///>Have to remove one cause listokens is 0 index based
+                dependencyName = dependency + "_of_" + headWord; ///>Have to remove one cause listokens is 0 index based
 
                 if (this.matrix.cDependencyColumn.containsKey(dependencyName)) {
                     if (this.matrix.cWordDependencyDataVectorIndex.containsKey(word + dependencyName)) {
@@ -1118,10 +1118,11 @@ public class MatrixMaker {
         ///>Print some matrix statistics
         String stats = String.format("Number of rows: %d\n" +
                         "Number of columns: %d\n" +
-                        "Number of unique types of clauses: %d\n" +
+                        "Number of unique types of clauses: %s\n" +
                         "Number of non-zero values: %d\n" +
                         "Sparsity: %f %%\n",
-                this.matrix.getNumberRows(), this.matrix.getNumberColumns(), this.matrix.cClauseSubClauseColumns.keySet().toString(), this.matrix.getNumberNonZeroElements(),
+                this.matrix.getNumberRows(), this.matrix.getNumberColumns(), Arrays.toString(this.matrix.cClauseSubClauseColumns.keySet().toArray()),
+                this.matrix.getNumberNonZeroElements(),
                 this.matrix.sparsity());
 
 
