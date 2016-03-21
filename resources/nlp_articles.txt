@@ -1,0 +1,536 @@
+Sanskrit
+Linguistics
+Artificial intelligence
+IPhone
+Python (programming language)
+Wikipedia
+Unmanned aerial vehicle
+Devanagari
+Probability
+SYNTAX
+Semantics
+Machine learning
+Probability distribution
+Dictionary
+Random variable
+Information theory
+Data mining
+Symantec
+Pac-Man
+Natural language
+Speech recognition
+Morpheme
+Interactive fiction
+Avatar (computing)
+Speech synthesis
+LOLITA
+Customer service
+Big data
+Machine translation
+Parsing
+Prolog
+Claude Shannon
+Computational linguistics
+Call centre
+Sergey Brin
+Rudolf Carnap
+Neuro-linguistic programming
+Turing test
+Wiktionary
+Sequence alignment
+HAL 9000
+IPhone 4S
+Interactive voice response
+Logistic regression
+Communication theory
+Stephen Wolfram
+Terminator (character)
+Text mining
+Inverse problem
+WordNet
+Artificial general intelligence
+Parse tree
+Google Glass
+Chatterbot
+MIT Computer Science and Artificial Intelligence Laboratory
+Anaphora (linguistics)
+Emerging technologies
+Perceptron
+Information extraction
+Semantic network
+Homograph
+Joseph Weizenbaum
+ELIZA
+Art game
+Microformat
+Speech processing
+Multinomial distribution
+Wearable computer
+Multidimensional scaling
+Gibbs sampling
+Computational intelligence
+Latent variable
+Language planning
+Peter Norvig
+Association for Computational Linguistics
+Hapax legomenon
+Part-of-speech tagging
+Watson (computer)
+Question answering
+Dirichlet distribution
+Head-driven phrase structure grammar
+N-gram
+Document classification
+Computational finance
+Centre for Development of Advanced Computing
+Latent semantic analysis
+X-bar theory
+Natural language understanding
+K-means clustering
+Sentiment analysis
+Deep learning
+Dialog tree
+Information Awareness Office
+Terminator (character concept)
+Principle of maximum entropy
+Universal translator
+Language model
+University of Edinburgh School of Informatics
+Computer-assisted language learning
+Natural language generation
+Categorical distribution
+University of Aleppo
+Conditional random field
+International Computer Science Institute
+Shakey the robot
+Eugene Jarvis
+Oak Ridge High School (Oak Ridge, Tennessee)
+British National Corpus
+Ben Goertzel
+List of computer science conferences
+Finite state transducer
+A* search algorithm
+Moto X
+School of Computer Science, University of Manchester
+Latent Dirichlet allocation
+Search engine indexing
+Edit distance
+Data science
+Google X
+Ontology engineering
+Trigram
+Inductive logic programming
+University of Michigan School of Information
+Intelligent tutoring system
+Stochastic context-free grammar
+Vaughan Pratt
+Charles J. Fillmore
+Pathwidth
+Dirichlet process
+Outline of artificial intelligence
+Query expansion
+Karen Spärck Jones
+Natural language user interface
+Rule-based system
+Topic model
+Web search query
+Applicant tracking system
+Language technology
+Grammar checker
+Automatic summarization
+Lexical Markup Framework
+Human-based computation
+History of artificial intelligence
+Expectation–maximization algorithm
+Prey (novel)
+ID3 algorithm
+1970s
+Link analysis
+Aravind Joshi
+Unified Medical Language System
+Language production
+Computational creativity
+Multinomial logistic regression
+Named-entity recognition
+Document retrieval
+List of linguists
+Parallel text
+Computer Laboratory, University of Cambridge
+Scientific writing
+Frederick Jelinek
+UIMA
+Victor Yngve
+Artificial Linguistic Internet Computer Entity
+Applications of artificial intelligence
+Text Services Framework
+Michael Loren Mauldin
+RightNow Technologies
+Microsoft Live Labs
+Henry Kucera
+Speech disfluency
+Word-sense disambiguation
+Automated online assistant
+Online tutoring
+Meltwater Group
+Social analytics
+Andrew McCallum
+List of computer scientists
+Façade (interactive story)
+Damerau–Levenshtein distance
+General Architecture for Text Engineering
+Phrasal template
+Alvey
+Upper ontology
+Probabilistic latent semantic analysis
+Political communications
+Formal ontology
+Link grammar
+NLP
+Cache language model
+Quantum cognition
+François Grosjean
+Social media measurement
+Makoto Nagao
+Qiqqa
+Archaeology Data Service
+Oren Etzioni
+Entity linking
+Semantic role labeling
+Knowledge extraction
+Automated essay scoring
+Document-term matrix
+Dartmouth Conferences
+Shallow parsing
+Natural Language Toolkit
+Text segmentation
+Grammar induction
+Definite clause grammar
+Computational semantics
+Ontotext
+Language identification
+Outline of science
+Statistical semantics
+Foreign language writing aid
+Progress in artificial intelligence
+Situation semantics
+Biomedical text mining
+Constraint Grammar
+Entity–attribute–value model
+Constraint Handling Rules
+Bob Coecke
+BabelNet
+SemEval
+Gary Hendrix
+UPCRC Illinois
+Feature learning
+Smartglasses
+Knowledge retrieval
+Zemanta
+Structured prediction
+Semantic compression
+Brill tagger
+James Pustejovsky
+Semantic gap
+COMIT
+Stop words
+Outline of computer science
+Cris Kobryn
+Jorge Stolfi
+Jaime Carbonell
+Tim Finin
+Scott's Pi
+Christopher Bishop
+Text simplification
+Personal robot
+Computational lexicology
+IVONA
+Calais (Reuters product)
+List of thought processes
+Reification (linguistics)
+Sentence boundary disambiguation
+De La Salle University College of Computer Studies
+ThoughtTreasure
+Speech segmentation
+Low-rank approximation
+Text, speech and dialogue
+DELPH-IN
+Explicit semantic analysis
+International Conference on Intelligent Text Processing and Computational Linguistics
+Iris (software)
+ISO 12620
+Maximum-entropy Markov model
+TÜBITAK Space Technologies Research Institute
+Search-based application
+Concept search
+Markov information source
+Twine (website)
+Eugene Goostman
+News analytics
+AlchemyAPI
+NetOwl
+Tom Preston-Werner
+Narrative Science
+Mehryar Mohri
+Co-occurrence networks
+RetrievalWare
+Time flies like an arrow; fruit flies like a banana
+Textual entailment
+Tatoeba
+Word lists by frequency
+Maluuba
+Facebook Graph Search
+Métier
+Ginger Software
+Perplexity
+Laboratoire d'informatique pour la mécanique et les sciences de l'ingénieur
+PropBank
+Anna University K B Chandrashekar Research Centre
+Eric Brill
+W-shingling
+Inxight
+Walter Savitch
+Q-systems
+William A. Martin
+Triphone
+Features new to Windows XP
+2081: A Hopeful View of the Human Future
+International Conference on Language Resources and Evaluation
+Radar Networks
+Michael Collins (computational linguist)
+Languageware
+Bag-of-words model
+Bulletin de la Société de Linguistique de Paris
+Indexed language
+Fred Chatterbot
+National Centre for Text Mining
+Basis Technology Corp.
+Center for Language and Speech Processing
+Proximity search (text)
+Neats vs. scruffies
+NIF
+Boris Katz
+Logic form
+List of artificial intelligence projects
+Social Semantic Web
+Phrase chunking
+Statistical parsing
+Michael Kohlhase
+Meaning–text theory
+Lexxe
+Bill DeSmedt
+PREview
+Stability (learning theory)
+William Aaron Woods
+Reasoning system
+Dragomir R. Radev
+Narendra Rocherolle
+Q-go
+MAREC
+Legal information retrieval
+Attensity
+Lexalytics
+Pachinko allocation
+Academic studies about Wikipedia
+James Curran (linguist)
+Polynomial kernel
+Outline of natural language processing
+Jean Véronis
+Historical dynamics
+Julia Hirschberg
+Brown clustering
+Walter Daelemans
+Extended Semantic Web Conference
+News360
+Temporal annotation
+Yuen Poovarawan
+CLAWS (linguistics)
+David Andreoff Evans
+Youdao
+Ubiquitous Knowledge Processing Lab
+Frederick J. Damerau
+Bot Colony
+Veveo
+CereProc
+General Sentiment
+Inbenta
+Constrained conditional model
+Truecasing
+Franz Josef Och
+LRE Map
+NetBase Solutions, Inc.
+Anboto Group
+Deep linguistic processing
+Allan M. Ramsay
+SNePS
+AFNLP
+Affix grammar over a finite lattice
+LaSIGE
+Log probability
+Noisy text
+Universal Terminology eXchange
+Nortel Speech Server
+Teragram Corporation
+Index of robotics articles
+List of computing and IT abbreviations
+Modular Audio Recognition Framework
+RWTH FSA Toolkit
+Generative science
+Sublanguage
+List of mergers and acquisitions by Symantec
+Stack search
+Hermann Moisl
+Hyponymy and hypernymy
+List of academic disciplines and sub-disciplines
+Library of Congress Classification:Class P, subclass P -- Philology linguistics
+European Conference on Information Retrieval
+Poison words
+Online Complaint Management System
+Tim Chklovski
+LinguaStream
+MultiNet
+List of Johns Hopkins University people
+Deterministic parsing
+List of MeSH codes (L01)
+Bitext word alignment
+IndoWordNet
+Carol Friedman
+Computational law
+Just This Once
+Parse.ly
+Toponym Resolution
+Symbolic programming
+Tehran Monolingual Corpus
+Word-sense induction
+Foma (software)
+Samepoint
+Automatic acquisition of lexicon
+Paul S. Cohen
+Cluster labeling
+Timo Honkela
+Financial Fraud Prevention-Oriented Information Resources using Ontology Technology
+Tata Research Development and Design Centre
+SmartAction
+Semantic computing
+Research on Language and Computation
+NooJ
+Jun'ichi Tsujii
+Eneida A. Mendonça
+Morphological parsing
+Distinguo
+TeLQAS
+ROUGE (metric)
+List of text mining software
+Barbara J. Grosz
+Veooz
+NewsCred
+Automatic taxonomy induction
+Center for the Evaluation of Language and Communication Technologies
+David Scott de Hilster
+PlWordNet
+Oneflare
+Diane Litman
+WX notation
+Britannica Arabic / Aljazem
+Natural language API
+Text graph
+Evan Tann
+Negobot
+Vu Digital
+Pheme (project)
+Abzooba
+Tree kernel
+MontyLingua
+Lightweight ontologies
+Cention
+Pop music automation
+List of genetic algorithm applications
+LIFER/LADDER
+European Master Program in Computational Logic
+WebCrow
+Language and Communication Technologies
+Data-centric programming language
+Nogacom
+A. R. D. Prasad
+Eiríkur Rögnvaldsson
+Digital healthcare
+Webfluenz
+Mexican International Conference on Artificial Intelligence
+Subject-oriented business process management
+Claw (disambiguation)
+Intelligent computer-assisted language instruction
+Alchemy (disambiguation)
+Linguistic Agents Ltd.
+Laboratoire d'Informatique de Grenoble
+Veveo Inc
+Veveo, Inc
+Sliding window based part-of-speech tagging
+Index of linguistics articles
+Commonsense knowledge (artificial intelligence)
+List of acronyms: N
+English language
+French language
+Spanish language
+German language
+European Union
+Arabic language
+Chinese language
+Computer science
+Japanese language
+Turkish language
+Computer
+World Wide Web
+Noam Chomsky
+Grammar
+Thai language
+Parliament of Canada
+Verb
+Noun
+Adjective
+Abbreviation
+Morphology (linguistics)
+Linear algebra
+Alan Turing
+Vocabulary
+Optical character recognition
+Pronoun
+First-order logic
+Information retrieval
+Stochastic
+Discourse
+Language acquisition
+Moore's law
+Text corpus
+Statistical inference
+Full stop
+Human–computer interaction
+Discourse analysis
+Meaning (linguistics)
+Capitalization
+Corpus linguistics
+Supervised learning
+Part of speech
+Transformational grammar
+Speech act
+SPEECH Act
+Decision tree
+Unsupervised learning
+Statistical machine translation
+Stemming
+Coarticulation
+Computing Machinery and Intelligence
+Semi-supervised learning
+Markov model
+SHRDLU
+Coreference
+Jabberwacky
+ALPAC
+Referring expression
+Racter
+PARRY
+Parry
+AI-complete
+Georgetown-IBM experiment
+Blocks world
+Relationship extraction
+Lexical resource
+Technolangue/Easy
