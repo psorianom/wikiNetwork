@@ -127,8 +127,11 @@ public class Utils {
         System.out.print("Saving matrix metadata as JSON...");
 
         Gson gson = new Gson();
+        // I can store all the class object as JSON
+        String matrixJSON = gson.toJson(matrix);
+        saveTextFile(pathMetaData + "MatrixContainer", matrixJSON, ".json");
 
-//        String cNPWordsColumn = gson.toJson(matrix.cNPwordsColumn);
+//        String cNPWordsColumn = gson.toJson(matrix.cNPstringColumn);
 //        saveTextFile(pathMetaData + "cNPWordsColumn", cNPWordsColumn, ".json");
 
         String cSubClausesColumnsJSON = gson.toJson(matrix.cSubClausesColumns);
@@ -140,8 +143,8 @@ public class Utils {
         String cPOSTokenJSON = gson.toJson(matrix.cPOSToken);
         saveTextFile(pathMetaData + "cPOSToken", cPOSTokenJSON, ".json");
 
-//        String cNPwordsColumnJSON = gson.toJson(matrix.cNPwordsColumn);
-//        saveTextFile(pathMetaData + "cNPwordsColumn", cNPwordsColumnJSON, ".json");
+//        String cNPwordsColumnJSON = gson.toJson(matrix.cNPstringColumn);
+//        saveTextFile(pathMetaData + "cNPstringColumn", cNPwordsColumnJSON, ".json");
 
         String cClauseSubClauseColumnsJSON = gson.toJson(matrix.cClauseSubClauseColumns);
         saveTextFile(pathMetaData + "cClauseSubClauseColumns", cClauseSubClauseColumnsJSON, ".json");

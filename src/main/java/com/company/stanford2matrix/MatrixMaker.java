@@ -84,21 +84,25 @@ public class MatrixMaker {
 
 //    private Map<Integer, String> NPIndex2ColumnIndex()
 
-    private final LinkedHashMap<Integer, String> getNPs(ArrayList<String> clauses) {
+    private final LinkedHashMap<Integer, String> getSelectedPhrases(ArrayList<String> clauses) {
+        /*
+        Receives the list of clauses a word belongs to. Returns a hashmap with the position of the clause
+        and its type (NP, VP, etc)
+         */
         LinkedHashMap<Integer, String> npPosition = new LinkedHashMap<>();
         Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
-            if (clauses.get(i).contains("NP") || clauses.get(i).contains("VP")) {
+            if (clauses.get(i).contains("NP")) {
                 npPosition.put(i, clauses.get(i));
             }
         return npPosition;
     }
 
-    private final LinkedHashMap<Integer, String> getNPhash(ArrayList<String> clauses) {
+    private final LinkedHashMap<Integer, String> getSelectedPhrasesHash(ArrayList<String> clauses) {
         LinkedHashMap<Integer, String> npHash = new LinkedHashMap<>();
 //        Collections.reverse(clauses);
         for (int i = 0; i < clauses.size(); i++)
-            if (clauses.get(i).contains("NP") || clauses.get(i).contains("VP")) {
+            if (clauses.get(i).contains("NP")) {
 //                ArrayList<String> sublisto = new ArrayList<>(clauses.subList(0, i + 1));
                 npHash.put(clauses.subList(0, i + 1).hashCode() % 1000, clauses.get(i));
 
@@ -178,7 +182,7 @@ public class MatrixMaker {
             for (ArrayList<String> relation : listRelations) {
                 String dependency = relation.get(0);
                 int headIndex = Integer.parseInt(relation.get(1));
-                String headWord = "";
+                String headWord;
                 if (dependency.equals("root"))
                     headWord = "SENTENCE";
                 else
@@ -377,8 +381,8 @@ public class MatrixMaker {
 
                         ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
 
-                        LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
-                        LinkedHashMap<Integer, String> lNPsHashes = getNPhash(clauses);
+                        LinkedHashMap<Integer, String> lNPposition = getSelectedPhrases(clauses);
+                        LinkedHashMap<Integer, String> lNPsHashes = getSelectedPhrasesHash(clauses);
                         /// Here we create a dict that maps NP hash to NP name: {-917:NP_18, 587:NP_20, ...}
                         for (Map.Entry<Integer, String> e : lNPsHashes.entrySet())
                             if (!lNPHashNPName.containsKey(e.getKey()))
@@ -458,15 +462,15 @@ public class MatrixMaker {
                         //                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
                         String keyNP = lNPHashNPName.get(hashNP) + wordTokens.toString();
                         // If this NP type plus these specific tokens have been seen before, we update the count (its value in the matrix)
-                        if (matrix.cNPwordsColumn.containsKey(keyNP)) {
-                            np_col = matrix.cNPwordsColumn.get(keyNP);
+                        if (matrix.cNPstringColumn.containsKey(keyNP)) {
+                            np_col = matrix.cNPstringColumn.get(keyNP);
                             int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
                             /// Update values in cData
                             for (int i = 0; i < n; i++)
                                 this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
 
                         } else { ///> Else, we create a new matrix column
-                            matrix.cNPwordsColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
+                            matrix.cNPstringColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                             np_col = column_j;
 
                             matrix.cSubClausesColumns.get(lpreClause.get(lNPHashNPName.get(hashNP))).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
@@ -627,8 +631,8 @@ public class MatrixMaker {
 
                     ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
 
-                    LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
-                    LinkedHashMap<Integer, String> lNPsHashes = getNPhash(clauses);
+                    LinkedHashMap<Integer, String> lNPposition = getSelectedPhrases(clauses);
+                    LinkedHashMap<Integer, String> lNPsHashes = getSelectedPhrasesHash(clauses);
                     /// Here we create a dict that maps NP hash to NP name: {-917:NP_18, 587:NP_20, ...}
                     for (Map.Entry<Integer, String> e : lNPsHashes.entrySet())
                         if (!lNPHashNPName.containsKey(e.getKey()))
@@ -708,15 +712,15 @@ public class MatrixMaker {
                     //                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
                     String keyNP = lNPHashNPName.get(hashNP) + wordTokens.toString();
                     // If this NP type plus these specific tokens have been seen before, we update the count (its value in the matrix)
-                    if (matrix.cNPwordsColumn.containsKey(keyNP)) {
-                        np_col = matrix.cNPwordsColumn.get(keyNP);
+                    if (matrix.cNPstringColumn.containsKey(keyNP)) {
+                        np_col = matrix.cNPstringColumn.get(keyNP);
                         int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
                         /// Update values in cData
                         for (int i = 0; i < n; i++)
                             this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
 
                     } else { ///> Else, we create a new matrix column
-                        matrix.cNPwordsColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
+                        matrix.cNPstringColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                         np_col = column_j;
 
                         matrix.cSubClausesColumns.get(lpreClause.get(lNPHashNPName.get(hashNP))).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
@@ -777,7 +781,7 @@ public class MatrixMaker {
 
     }
 
-    private void prepareCorpiMatrixNPs(String pathFile, boolean removeLongSentences, boolean onlyStatistics) throws IOException, InvalidLengthsException {
+    private void prepareCorpusMatrixNPs(String pathFile, boolean removeLongSentences, boolean onlyStatistics) throws IOException, InvalidLengthsException {
         String file = readFile(pathFile, true);
 
         ///DECLARATIONS
@@ -890,8 +894,8 @@ public class MatrixMaker {
 
                     ArrayList<String> clauses = new ArrayList(Arrays.asList(constituency.split(",")));
 
-                    LinkedHashMap<Integer, String> lNPposition = getNPs(clauses);
-                    LinkedHashMap<Integer, String> lNPsHashes = getNPhash(clauses);
+                    LinkedHashMap<Integer, String> lNPposition = getSelectedPhrases(clauses);
+                    LinkedHashMap<Integer, String> lNPsHashes = getSelectedPhrasesHash(clauses);
                     /// Here we create a dict that maps NP hash to NP name: {-917:NP_18, 587:NP_20, ...}
                     for (Map.Entry<Integer, String> e : lNPsHashes.entrySet())
                         if (!lNPHashNPName.containsKey(e.getKey()))
@@ -908,7 +912,7 @@ public class MatrixMaker {
 
                         String clauseInitials = targetClause.split("_")[0];
                         lClausesSeen.add(clauseInitials);
-                        /// We add hashed code of ancestors to distinguish NPs below
+                        /// We add hashed code of ancestors to distinguish NPs below (a sentence may have multiple NPs)
                         lListConstituencies.add(getKinship(constituency, index_j, true).hashCode() % 1000);
                         /**
                          * 2.1 We get the tags of what constitutes the targetClause. Such that:
@@ -935,7 +939,7 @@ public class MatrixMaker {
 
 
                     }
-                }// end of current line (each line is a token!). Sentence is completely read.
+                }// end of current line (each line is a token!).
                 /**
                  * 3. Once the complete pass over the sentence is done, we get what represents each column.
                  * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
@@ -968,18 +972,21 @@ public class MatrixMaker {
                         wordTokens.add(lListTokensPOSSeen.get(words.get(w)));
                     }
                     /// Here we create a hash id that will identify these particular words as well as the type of NP
-//                    int keyNP = hashNP + (wordIndices.hashCode() % 1000
+                    /// Specifically, we will link words to NP or VPs
+//                    String keyNP = Integer.toString((hashNP + wordIndices.hashCode()) % 10000);
                     String keyNP = lNPHashNPName.get(hashNP) + wordTokens.toString();
+                    System.out.println(keyNP);
                     // If this NP type plus these specific tokens have been seen before, we update the count (its value in the matrix)
-                    if (matrix.cNPwordsColumn.containsKey(keyNP)) {
-                        np_col = matrix.cNPwordsColumn.get(keyNP);
+                    if (matrix.cNPstringColumn.containsKey(keyNP)) {
+                        np_col = matrix.cNPstringColumn.get(keyNP);
                         int indexNPCol = matrix.cNPColVectorIndex.get(np_col);
                         /// Update values in cData
-                        for (int i = 0; i < n; i++)
-                            this.matrix.cData.set(indexNPCol + i, this.matrix.cData.get(indexNPCol + i) + 1);
-
+                        for (int i = 0; i < n; i++) {
+                            int testi = this.matrix.cData.get(indexNPCol + i);
+                            this.matrix.cData.set(indexNPCol + i, testi + 1);
+                        }
                     } else { ///> Else, we create a new matrix column
-                        matrix.cNPwordsColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
+                        matrix.cNPstringColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                         np_col = column_j;
 
                         matrix.cSubClausesColumns.get(lpreClause.get(lNPHashNPName.get(hashNP))).add(np_col);///> Dict { NP_19:[1,3,5,7], NP_20:[2,6,8,10], ...}
@@ -1070,7 +1077,7 @@ public class MatrixMaker {
         int idx = 1;
 
         ///> This loops goes file by file
-        /// There is only one file here, the semeval 2007 XML
+        /// There is only one file here, the semeval 2010 XML
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
             this.prepareSemeval2010MatrixNPs(path);
@@ -1099,7 +1106,7 @@ public class MatrixMaker {
             System.out.println(Integer.toString(idx) + ": " + path);
             ///> This is the function that actually parses the wiki Stanford parse into a graph
 
-            this.prepareCorpiMatrixNPs(path, false, false);
+            this.prepareCorpusMatrixNPs(path, true, false);
             idx++;
             System.out.flush();
         }

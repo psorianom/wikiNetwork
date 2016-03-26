@@ -35,7 +35,7 @@ public class MatrixContainer {
     public Map<Integer, String> cRowToken; ///> Contains the col index and the token it corresponds to.
     public DefaultDict<String, ArrayList<Integer>> cPOSToken; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
     public Map<Integer, String> cTokenPOS; ///> Contains the indices of the tokens according to their POS tag: NN:[1,5,7], ...
-    public Map<String, Integer> cNPwordsColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
+    public Map<String, Integer> cNPstringColumn; ///> Contains the words and the type of NP (concatenated) as key and the column id as value
 
     /**
      * Contains the type of column there are (NP, VP, PRP, MODIF, ...) and the subtype, if present, ("DT_JJ_NN","DT_NN",etc).
@@ -75,7 +75,7 @@ public class MatrixContainer {
         cRowToken = new HashMap<>();
         cPOSToken = new DefaultDict<>();
         cTokenPOS = new HashMap<>();
-        cNPwordsColumn = new HashMap<>();
+        cNPstringColumn = new HashMap<>();
         cClauseSubClauseColumns = new DefaultDict<>(DefaultDict.class);
         cNgramColumn = new HashMap();
         cColumnDependency = new HashMap<>();
