@@ -36,8 +36,8 @@ public class ParserThread implements Runnable {
     public String pathFile;
     public StanfordCoreNLP coreParser;
     //    Constructor
-    ParserThread(String pathFile, StanfordCoreNLP coreParser) {
-        this.coreParser = coreParser;
+    ParserThread(String pathFile, StanfordCoreNLP coreNLPParser) {
+        this.coreParser = coreNLPParser;
         this.pathFile = pathFile;
     }
 
@@ -303,18 +303,16 @@ public class ParserThread implements Runnable {
         }
     }
 
-    private void parseSemeval2010(String pathFile, Boolean test) {
+    private void parseSemeval2010(String pathFile, String datasetType) {
         try {
-            String datasetType = "";
-            if (test)
-                datasetType = ".test";
+            datasetType = "." + datasetType;
                 
             
             File input = new File(pathFile);
             InputStream xmlFile = new FileInputStream(input);
             String parsedFilePath = input.getCanonicalPath() + ".parsed";
             FileWriter parsedOutput = new FileWriter(parsedFilePath);
-            String tagetWord = input.getName().substring(0, input.getName().length() - 4) + datasetType;
+            String targetWord = input.getName().substring(0, input.getName().length() - 4) + datasetType;
             
             BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
             Document doc = Jsoup.parse(xmlFile, "UTF-8", "", Parser.xmlParser());
@@ -322,7 +320,7 @@ public class ParserThread implements Runnable {
             bufferedOut.write("FILENAME\t" + input.getName() + nline);
             bufferedOut.write(header + nline);
 
-            Elements twInstances = doc.getElementsByTag(tagetWord).first().children();
+            Elements twInstances = doc.getElementsByTag(targetWord).first().children();
             //Foreach lexical element "lexelt"
             for (Element ins : twInstances) {
                 String instanceName = ins.nodeName();
@@ -488,9 +486,9 @@ public class ParserThread implements Runnable {
     public void run() {
         System.out.print("WORKING on " + pathFile + "\n");
 //        parseWiki(pathFile);
-        parseOANCText(pathFile);
+//        parseOANCText(pathFile);
 //        parseSemeval2007(pathFile);
-//        parseSemeval2010(pathFile, true);
+        parseSemeval2010(pathFile, "train");
         System.out.println("... DONE");
 
     }
