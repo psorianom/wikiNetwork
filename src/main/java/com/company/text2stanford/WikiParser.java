@@ -74,7 +74,6 @@ public class WikiParser {
         } catch (ParseException exp) {
             System.err.println("Parsing failed.  Reason: " + exp.getMessage());
             return;
-
         }
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
 //        String data = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
