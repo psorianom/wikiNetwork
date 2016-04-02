@@ -42,25 +42,6 @@
             <version>3.5.2</version>
             <classifier>models</classifier>
         </dependency>
-        <dependency>
-            <groupId>is2</groupId>
-            <artifactId>mate-parser</artifactId>
-            <version>3.3</version>
-            <scope>system</scope>
-            <systemPath>${project.build.directory}/dependency/anna-3.3.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>edu.upc.freeling</groupId>
-            <artifactId>freeling</artifactId>
-            <version>3.1</version>
-            <scope>system</scope>
-            <systemPath>${project.build.directory}/dependency/freeling.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>org.maltparser</groupId>
-            <artifactId>maltparser</artifactId>
-            <version>1.8</version>
-        </dependency>
 
         <!--<dependency>-->
         <!--<groupId>jni</groupId>-->
