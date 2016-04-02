@@ -877,8 +877,8 @@ public class MatrixMaker {
                     String constituency = splittedLine[3];
                     String dependencyHead = splittedLine[4];
                     String dependency = splittedLine[5];
+//                    String token_pos = lemma + "_" + posTag;
                     String token_pos = lemma + "_" + posTag;
-
                     lListAllTokensPOS.add(token_pos);
 
                     // HERE WE START. If the word is not a punctuation mark (PUNCT)
@@ -897,11 +897,11 @@ public class MatrixMaker {
                      *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrixContainer
                      */
 
-                    if (!matrixContainer.cTokenRow.containsKey(token_pos)) {
+                    if (!matrixContainer.cTokenRow.containsKey(lemma)) {
                         ///>This is the dict with the pos_tag : row_index
-                        matrixContainer.cTokenRow.put(token_pos, row_i);
+                        matrixContainer.cTokenRow.put(lemma, row_i);
                         ///> Save inverted index
-                        matrixContainer.cRowToken.put(row_i, token_pos);
+                        matrixContainer.cRowToken.put(row_i, lemma);
                         matrixContainer.cPOSToken.get(posTag).add(row_i);
                         row_i++;
 
