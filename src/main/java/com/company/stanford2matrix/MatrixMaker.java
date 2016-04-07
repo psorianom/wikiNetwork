@@ -1367,8 +1367,8 @@ public class MatrixMaker {
 
         /// There is only one file here, the semeval 2010 XML
         for (String path : listPaths) {
-            if (!path.contains("moment"))
-                continue;
+//            if (!path.contains("moment"))
+//                continue;
             System.out.println(Integer.toString(idx) + ": " + path);
             this.prepareSemeval2010TrainMatrixNPs(path);
             idx++;
