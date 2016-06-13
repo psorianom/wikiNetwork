@@ -194,9 +194,68 @@ public class MatrixMaker {
 
     }
 
+    private final void addIndividualDependenciesColumns(ArrayList<String> listTokens,
+                                                        Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
+        /**
+         * Generates a column for each dependency relation in the phrase.  A link is created between the word and
+         * its corresponding dependency node. A second link is  containing as information the type of relation plus the head (nsubj_head).
+         *
+         */
+
+
+        String dependencyString;
+        Integer dependencyNameCol;
+        int lDependencyDataIndex;
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : lDictDependencyHeadIndex.entrySet()) {
+            String word = entry.getKey();
+            ArrayList<ArrayList<String>> listRelations = entry.getValue();
+            for (ArrayList<String> relation : listRelations) {
+                String dependency = relation.get(0);
+                int headIndex = Integer.parseInt(relation.get(1));
+                String headWord;
+                if (dependency.equals("root"))
+                    headWord = "toor";
+                else
+                    headWord = listTokens.get(headIndex - 1);
+                dependencyString = dependency + "(" + headWord + ", " + word + ")"; ///>Have to remove one cause listokens is 0 index based
+
+                if (matrixContainer.cDependencyColumn.containsKey(dependencyString)) {
+                    if (matrixContainer.cWordDependencyDataVectorIndex.containsKey(dependencyString)) {
+                        lDependencyDataIndex = matrixContainer.cWordDependencyDataVectorIndex.get(dependencyString);
+                        /// Get the index on the cData vector of the value that must be modified
+                        matrixContainer.cData.set(lDependencyDataIndex, matrixContainer.cData.get(lDependencyDataIndex) + 1);
+                    } else {
+                        dependencyNameCol = matrixContainer.cDependencyColumn.get(dependencyString);
+                        matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
+                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
+                        matrixContainer.cCols.add(dependencyNameCol);
+                        matrixContainer.cData.add(1);
+                    }
+                } else {
+                    matrixContainer.cDependencyColumn.put(dependencyString, ++column_j);
+                    /// Save the reverse index
+                    matrixContainer.cColumnDependency.put(column_j, dependencyString);
+                    matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
+                    matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
+                    matrixContainer.cCols.add(column_j);
+                    matrixContainer.cData.add(1);
+
+
+                }
+            }
+        }
+    }
+
 
     private final void addDependenciesColumns(ArrayList<String> listTokens,
                                               Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
+        /**
+         * Generates a column for each dependency relation in the phrase.  A link is created between the word and a
+         * dependency node containing as information the type of relation plus the head (nsubj_head).
+         *
+         */
+
+
         String dependencyName;
         Integer dependencyNameCol;
         int lDependencyDataIndex;
