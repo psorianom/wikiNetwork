@@ -13,6 +13,7 @@ public class MatrixMaker {
     private static String pathFolder;
     private static String outputFolder;
     private static int column_j = 0;
+    private static String semevalCorpusType = "train";
     private static int row_i = 0; ///> The i index for the matrixContainer
     public int numSent = 0;
     Map<String, Integer> cDictAllTokens = new DefaultDict<String, Integer>();
@@ -33,6 +34,7 @@ public class MatrixMaker {
         CommandLineParser parser = new GnuParser();
         Options options = new Options();
         options.addOption("i", "input", true, "Input folder of parsed files");
+        options.addOption("t", "type", true, "Corpus type, training or testing");
 //        options.addOption("o", "output", true, "Output folder of matrixContainer+metadata");
         MatrixMaker myMaker = new MatrixMaker();
         try {
@@ -46,6 +48,11 @@ public class MatrixMaker {
                 System.out.println("Please give an input folder");
                 return;
             }
+
+            if (line.hasOption("t")) {
+                myMaker.setSemevalCorpusType(line.getOptionValue("t"));
+            } else
+                System.out.println("If using semeval, specify if its training or testing corpus");
 
 
         } catch (ParseException exp) {
@@ -72,9 +79,19 @@ public class MatrixMaker {
 
     }
 
+
+    public String getSemevalCorpusType() {
+        return semevalCorpusType;
+    }
+
+    public void setSemevalCorpusType(String type) {
+        semevalCorpusType = type;
+    }
+
     public String getDataPath() {
         return pathFolder;
     }
+
 
     public void setDataPath(String dataPath) {
         pathFolder = dataPath;
@@ -1644,11 +1661,15 @@ public class MatrixMaker {
         /* big loop with for each file of the wiki stanford-parsed files*/
         int idx = 1;
 
+
         ///> This loops goes file by file
         /// There is only one file here, the semeval 2007 XML
         for (String path : listPaths) {
             System.out.println(Integer.toString(idx) + ": " + path);
-            this.prepareSemeval2007TrainMatrixNPs(path);
+            if (semevalCorpusType.equals("training"))
+                this.prepareSemeval2007TrainMatrixNPs(path);
+            else
+                this.prepareSemeval2007TestMatrixNPs(path);
             idx++;
             System.out.flush();
         }
@@ -1670,7 +1691,10 @@ public class MatrixMaker {
 //            if (!path.contains("moment"))
 //                continue;
             System.out.println(Integer.toString(idx) + ": " + path);
-            this.prepareSemeval2010TrainMatrixNPs(path);
+            if (semevalCorpusType.equals("training"))
+                this.prepareSemeval2010TrainMatrixNPs(path);
+            else
+                this.prepareSemeval2010TestMatrixNPs(path);
             idx++;
             System.out.flush();
         }
