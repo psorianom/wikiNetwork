@@ -15,6 +15,7 @@ public class MatrixMaker {
     private static int column_j = 0;
     private static String semevalCorpusType = "train";
     private static int row_i = 0; ///> The i index for the matrixContainer
+    private static boolean isDryRun = false;
     public int numSent = 0;
     Map<String, Integer> cDictAllTokens = new DefaultDict<String, Integer>();
     //    ArrayList<String> cListAllTokens = new ArrayList<>();
@@ -29,12 +30,14 @@ public class MatrixMaker {
         matrixContainer = new MatrixContainer();
     }
 
+
     public static void main(String[] args) throws InterruptedException, IOException, InvalidLengthsException {
 
         CommandLineParser parser = new GnuParser();
         Options options = new Options();
         options.addOption("i", "input", true, "Input folder of parsed files");
         options.addOption("t", "type", true, "Corpus type, training or testing");
+        options.addOption("d", "type", false, "Parsing dry run. No files are saved at all");
 //        options.addOption("o", "output", true, "Output folder of matrixContainer+metadata");
         MatrixMaker myMaker = new MatrixMaker();
         try {
@@ -49,10 +52,13 @@ public class MatrixMaker {
                 return;
             }
 
-            if (line.hasOption("t")) {
+            if (line.hasOption("t"))
                 myMaker.setSemevalCorpusType(line.getOptionValue("t"));
-            } else
+            else
                 System.out.println("If using semeval, specify if its training or testing corpus");
+
+            if (line.hasOption("d"))
+                myMaker.setIsDryRun(true);
 
 
         } catch (ParseException exp) {
@@ -67,7 +73,7 @@ public class MatrixMaker {
 
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/sentencedata";
             //        String dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/oanc/corpus";
-            myMaker.runParseCorpus(true);
+            myMaker.runParseCorpus();
         } else if (myMaker.getDataPath().contains("semeval2007")) {
 //            dataPath = "/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/semeval2007/task 02/key/data/";
             myMaker.runParseSemeval2007();
@@ -77,6 +83,14 @@ public class MatrixMaker {
         }
 
 
+    }
+
+    public boolean getIsDryRun() {
+        return isDryRun;
+    }
+
+    public void setIsDryRun(boolean isDryRun) {
+        this.isDryRun = isDryRun;
     }
 
 
@@ -221,7 +235,6 @@ public class MatrixMaker {
 
 
         String dependencyString;
-        Integer dependencyNameCol;
         int lDependencyDataIndex;
         for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : lDictDependencyHeadIndex.entrySet()) {
             String word = entry.getKey();
@@ -231,7 +244,7 @@ public class MatrixMaker {
                 int headIndex = Integer.parseInt(relation.get(1));
                 String headWord;
                 if (dependency.equals("root"))
-                    headWord = "toor";
+                    headWord = "ROOT";
                 else
                     headWord = listTokens.get(headIndex - 1);
                 dependencyString = dependency + "(" + headWord + ", " + word + ")"; ///>Have to remove one cause listokens is 0 index based
@@ -240,22 +253,38 @@ public class MatrixMaker {
                     if (matrixContainer.cWordDependencyDataVectorIndex.containsKey(dependencyString)) {
                         lDependencyDataIndex = matrixContainer.cWordDependencyDataVectorIndex.get(dependencyString);
                         /// Get the index on the cData vector of the value that must be modified
-                        matrixContainer.cData.set(lDependencyDataIndex, matrixContainer.cData.get(lDependencyDataIndex) + 1);
-                    } else {
-                        dependencyNameCol = matrixContainer.cDependencyColumn.get(dependencyString);
-                        matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
-                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
-                        matrixContainer.cCols.add(dependencyNameCol);
-                        matrixContainer.cData.add(1);
+                        for (int i = 0; i < 2; i++) { /// We update the values of the two words (all relations are binary)
+                            matrixContainer.cData.set(lDependencyDataIndex + i, matrixContainer.cData.get(lDependencyDataIndex + i) + 1);
+                            if (!headWord.equals("ROOT"))
+                                break;
+                        }
+
                     }
+//                    else {
+//                        dependencyNameCol = matrixContainer.cDependencyColumn.get(dependencyString);
+//                        matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
+//                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
+//                        matrixContainer.cCols.add(dependencyNameCol);
+//                        matrixContainer.cData.add(1);
+//                    }
                 } else {
                     matrixContainer.cDependencyColumn.put(dependencyString, ++column_j);
                     /// Save the reverse index
                     matrixContainer.cColumnDependency.put(column_j, dependencyString);
+
+                    /// Save the location of this new value in the cData vector (for later updating)
                     matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
+
+                    /// Add word (dependant) row, column, and data
                     matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
                     matrixContainer.cCols.add(column_j);
                     matrixContainer.cData.add(1);
+                    /// Add head row (if the relation is not root type)
+                    if (!headWord.equals("ROOT")) {
+                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(headWord));
+                        matrixContainer.cCols.add(column_j);
+                        matrixContainer.cData.add(1);
+                    }
 
 
                 }
@@ -621,10 +650,12 @@ public class MatrixMaker {
 //                lTargetWordInstancesMatrices.get(targetWord).put(instanceID, new JSONGraphContainer(matrixContainer));
                 lTargetWordInstancesMatrices.get(targetWordID).put(instanceID, matrixContainer);
             }//for each instance
-            Gson gson = new Gson();
-            System.out.print("Saving " + targetWordID + " JSON file...");
-            String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrices);
-            saveTextFile(this.pathFolder + "/../matrixContainer/" + "semeval2007_" + targetWordID, sTargetWordInstancesMatrices, ".json");
+            if (!getIsDryRun()) {
+                Gson gson = new Gson();
+                System.out.print("Saving " + targetWordID + " JSON file...");
+                String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrices);
+                saveTextFile(pathFolder + "/../matrixContainer/" + "semeval2007_" + targetWordID, sTargetWordInstancesMatrices, ".json");
+            }
             System.out.println("Done");
         }// for each targetword
     }
@@ -835,7 +866,8 @@ public class MatrixMaker {
 
                     }
                     //Here we add the dependencies
-                    addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+//                    addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                    addIndividualDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                     //Here we add the sentence columns
                     addSentenceColumns(lListTokensPOSSeen, 100000);//1865652
@@ -872,10 +904,18 @@ public class MatrixMaker {
             }//for each instance
 //            lTargetWordInstancesMatrix.put(instanceID, matrixContainer);
             lTargetWordInstancesMatrix.put(targetWordID, matrixContainer);
-            Gson gson = new Gson();
-            System.out.print("Saving " + targetWordID + " JSON file...");
-            String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrix);
-            saveTextFile(this.pathFolder + "/../training_data/" + targetWordID, sTargetWordInstancesMatrices, ".json");
+            matrixContainer.getMatrixStatistics();
+
+            if (!getIsDryRun()) {
+                Gson gson = new Gson();
+                System.out.print("Saving " + targetWordID + " JSON file...");
+                String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrix);
+                String POSpath = "nouns/";
+                if (targetWordID.contains(".v"))
+                    POSpath = "verbs/";
+
+                saveTextFile(pathFolder + "/../training_data/" + POSpath + targetWordID, sTargetWordInstancesMatrices, ".json");
+            }
             System.out.println("Done");
         }// for each targetword
     }
@@ -1127,8 +1167,10 @@ public class MatrixMaker {
         //}//for each instance
         Gson gson = new Gson();
         System.out.print("Saving " + targetWord + " JSON file...");
-        String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrices);
-        saveTextFile(parentDirectory + "/" + targetWord + "_metamatrix", sTargetWordInstancesMatrices, ".json");
+        if (!this.getIsDryRun()) {
+            String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrices);
+            saveTextFile(parentDirectory + "/" + targetWord + "_metamatrix", sTargetWordInstancesMatrices, ".json");
+        }
         System.out.println("Done");
         matrixContainer = null;
 
@@ -1378,10 +1420,13 @@ public class MatrixMaker {
         lTargetWordInstancesMatrix.put(targetWord, matrixContainer);
 
         Gson gson = new Gson();
-        System.out.print("Saving " + targetWord + " JSON file...");
         String sTargetWordInstancesMatrices = gson.toJson(lTargetWordInstancesMatrix);
-        saveTextFile(parentDirectory + "/" + targetWord + "_metamatrix", sTargetWordInstancesMatrices, ".json");
+        if (!getIsDryRun()) {
+            System.out.print("Saving " + targetWord + " JSON file...");
+            saveTextFile(parentDirectory + "/" + targetWord + "_metamatrix", sTargetWordInstancesMatrices, ".json");
+        }
         System.out.println("Done");
+        matrixContainer.getMatrixStatistics();
         matrixContainer = null;
 
     }
@@ -1704,7 +1749,7 @@ public class MatrixMaker {
     }
 
 
-    public void runParseCorpus(boolean saveMatrix) throws IOException, InvalidLengthsException {
+    public void runParseCorpus() throws IOException, InvalidLengthsException {
         long start = System.nanoTime();
         ArrayList<String> listPaths = listFiles(pathFolder, "parsed");
 
@@ -1751,7 +1796,7 @@ public class MatrixMaker {
         matrixContainer.cColumnSubClause = invertMapOfSets(matrixContainer.cSubClausesColumns);
         matrixContainer.cTokenPOS = invertMapOfLists(matrixContainer.cPOSToken);
 
-        if (saveMatrix) {
+        if (!getIsDryRun()) {
             /// Create and save matrixContainer to MatrixMarket Format
             saveMatrixMarketFormat(pathFolder + "/../matrixContainer/MMMatrix", matrixContainer, true);
 

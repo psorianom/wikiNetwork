@@ -108,6 +108,14 @@ public class MatrixContainer {
 //    }
 
 
+    public void getMatrixStatistics() {
+        System.out.println();
+        System.out.format("Number of rows: %d\n", getNumberRows());
+        System.out.format("Number of columns: %d\n", getNumberColumns());
+        System.out.format("Number of edges: %d\n", cData.size());
+        System.out.format("Number of non-zero elements: %d\n", getNumberNonZeroElements());
+    }
+
     public int getNumberRows() {
         return this.cTokenRow.keySet().size();
     }
