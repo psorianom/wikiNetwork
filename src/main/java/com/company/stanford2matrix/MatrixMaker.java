@@ -1,6 +1,7 @@
 package com.company.stanford2matrix;
 
 import com.google.gson.Gson;
+import edu.stanford.nlp.util.StringUtils;
 import org.apache.commons.cli.*;
 
 import java.io.File;
@@ -243,10 +244,13 @@ public class MatrixMaker {
                 String dependency = relation.get(0);
                 int headIndex = Integer.parseInt(relation.get(1));
                 String headWord;
-                if (dependency.equals("root"))
-                    headWord = "ROOT";
-                else
-                    headWord = listTokens.get(headIndex - 1);
+                if (dependency.equals("root") || (dependency.equals("PUNCT")))
+                    continue;
+
+
+                headWord = listTokens.get(headIndex - 1);
+                if (!StringUtils.isAlpha(headWord))
+                    continue;
                 dependencyString = dependency + "(" + headWord + ", " + word + ")"; ///>Have to remove one cause listokens is 0 index based
 
                 if (matrixContainer.cDependencyColumn.containsKey(dependencyString)) {
@@ -255,8 +259,6 @@ public class MatrixMaker {
                         /// Get the index on the cData vector of the value that must be modified
                         for (int i = 0; i < 2; i++) { /// We update the values of the two words (all relations are binary)
                             matrixContainer.cData.set(lDependencyDataIndex + i, matrixContainer.cData.get(lDependencyDataIndex + i) + 1);
-                            if (!headWord.equals("ROOT"))
-                                break;
                         }
 
                     }
@@ -276,15 +278,21 @@ public class MatrixMaker {
                     matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
 
                     /// Add word (dependant) row, column, and data
+                    if (!matrixContainer.cTokenRow.containsKey(word))
+                        System.out.println();
+
+                    if (!matrixContainer.cTokenRow.containsKey(headWord))
+                        System.out.println();
+
                     matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
                     matrixContainer.cCols.add(column_j);
                     matrixContainer.cData.add(1);
+
                     /// Add head row (if the relation is not root type)
-                    if (!headWord.equals("ROOT")) {
-                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(headWord));
-                        matrixContainer.cCols.add(column_j);
-                        matrixContainer.cData.add(1);
-                    }
+                    matrixContainer.cRows.add(matrixContainer.cTokenRow.get(headWord));
+                    matrixContainer.cCols.add(column_j);
+                    matrixContainer.cData.add(1);
+
 
 
                 }
@@ -475,7 +483,7 @@ public class MatrixMaker {
                         lListAllTokensPOS.add(token_pos);
 
                         // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
-                        if (dependency.equals("PUNCT"))
+                        if (!StringUtils.isAlpha(lemma))
                             continue;
 
                         //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
@@ -685,7 +693,8 @@ public class MatrixMaker {
 
             ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE\t")));
             String targetWordID = instances.get(0).trim();
-
+//            if (!targetWordID.contains("fix.v"))
+//                continue;
             System.out.println("Target word: " + ii + " " + targetWordID);
             instances.remove(0);
             Map<String, MatrixContainer> lTargetWordInstancesMatrix = new HashMap<>();
@@ -722,18 +731,18 @@ public class MatrixMaker {
                         String constituency = splittedLine[3];
                         String dependencyHead = splittedLine[4];
                         String dependency = splittedLine[5];
-                        String token_pos = lemma;
+//                        String token_pos = lemma;
 
-                        lListAllTokensPOS.add(token_pos);
+                        lListAllTokensPOS.add(lemma);
 
-                        // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
-                        if (dependency.equals("PUNCT"))
+                        // HERE WE START. If the word is not a punctuation mark (PUNCT)
+                        if (!StringUtils.isAlpha(lemma))
                             continue;
 
                         //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
 //                        if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj")) {
                         //                        lDictDependencyHeadIndex.get(token_pos).add(new HashMap<String, Integer>(){{put(dependency, Integer.parseInt(dependencyHead));}});
-                        lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
+                        lDictDependencyHeadIndex.get(lemma).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
 //                        }
 
                         /***
@@ -742,18 +751,19 @@ public class MatrixMaker {
                          *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrixContainer
                          */
 
-                        if (!matrixContainer.cTokenRow.containsKey(token_pos)) {
+
+                        if (!matrixContainer.cTokenRow.containsKey(lemma)) {
                             ///>This is the dict with the pos_tag : row_index
-                            matrixContainer.cTokenRow.put(token_pos, row_i);
+                            matrixContainer.cTokenRow.put(lemma, row_i);
                             ///> Save inverted index
-                            matrixContainer.cRowToken.put(row_i, token_pos);
+                            matrixContainer.cRowToken.put(row_i, lemma);
                             matrixContainer.cPOSToken.get(posTag).add(row_i);
                             row_i++;
 
                         }
 
 
-                        lListTokensPOSSeen.add(token_pos);
+                        lListTokensPOSSeen.add(lemma);
                         /**
                          * 2. Using the constituency results, we find all the NPs clauses contained in the phrase.
                          *      We discard, at the beginning, any other type of clause (VP, ADJP, PP, PRP, etc).
@@ -858,6 +868,8 @@ public class MatrixMaker {
                             lSubClausesColumns.get(lNPHashNPName.get(hashNP)).add(np_col); ///> Same as before, but local
                             matrixContainer.cNPColVectorIndex.put(np_col, matrixContainer.cCols.size()); ///> Dict for fast vector index searching given a column value. answers: Where in the vector is this value??
                             for (int j = 0; j < n; j++) {
+                                if (wordIndices.get(j) == null)
+                                    System.out.println();
                                 matrixContainer.cRows.add(wordIndices.get(j));
                                 matrixContainer.cCols.add(np_col);
                                 matrixContainer.cData.add(1);
@@ -988,7 +1000,7 @@ public class MatrixMaker {
                     lListAllTokensPOS.add(token_pos);
 
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
-                    if (dependency.equals("PUNCT") || !constituency.contains("NP"))
+                    if (!StringUtils.isAlpha(lemma))
                         continue;
 
                     //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
@@ -1241,7 +1253,7 @@ public class MatrixMaker {
                     lListAllTokensPOS.add(token_pos);
 
                     // HERE WE START. If the word is not a punctuation mark (PUNCT)
-                    if (dependency.equals("PUNCT"))
+                    if (!StringUtils.isAlpha(lemma))
                         continue;
 
                     //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
