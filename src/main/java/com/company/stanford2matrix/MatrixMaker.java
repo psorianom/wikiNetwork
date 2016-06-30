@@ -195,6 +195,9 @@ public class MatrixMaker {
 //        Set<String> hashTokens = new HashSet<>(listTokens);
 //        listTokens = new ArrayList<>(hashTokens);
 
+        if (listTokens.isEmpty())
+            return;
+
         String phrase = String.join(" ", listTokens);
         int hashcode;
         if (hashLength > 0)
@@ -212,6 +215,9 @@ public class MatrixMaker {
             for (int i = 0; i < listTokens.size(); i++)
                 matrixContainer.cData.set(lSentenceDataIndex + i, matrixContainer.cData.get(lSentenceDataIndex + i) + 1);
         } else {
+
+            if (column_j == 6536)
+                System.out.print("");
             matrixContainer.cSentenceHashColumn.put(hashcode, ++column_j);
             matrixContainer.cColumnSentenceHash.put(column_j, Integer.toString(hashcode)); ///> We save the inverted index
 //            matrixContainer.cColumnSentenceWords.put(column_j, phrase);
@@ -270,6 +276,7 @@ public class MatrixMaker {
 //                        matrixContainer.cData.add(1);
 //                    }
                 } else {
+
                     matrixContainer.cDependencyColumn.put(dependencyString, ++column_j);
                     /// Save the reverse index
                     matrixContainer.cColumnDependency.put(column_j, dependencyString);
@@ -693,7 +700,7 @@ public class MatrixMaker {
 
             ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE\t")));
             String targetWordID = instances.get(0).trim();
-//            if (!targetWordID.contains("fix.v"))
+//            if (!targetWordID.contains("remove.v"))
 //                continue;
             System.out.println("Target word: " + ii + " " + targetWordID);
             instances.remove(0);
@@ -712,6 +719,8 @@ public class MatrixMaker {
 
                 for (String s : sentences) {
                     ArrayList<String> lines = new ArrayList(Arrays.asList(s.split("\n"))); ///> List of lines that compose each sentence
+                    if (lines.size() <= 4)
+                        continue;
                     lines.remove(0); ///> We remove the sentence ID from the list of lines
 
                     Set<String> lClausesSeen = new HashSet<>(); ///> List that contains which clauses (NP) are found during the iteration
@@ -751,6 +760,8 @@ public class MatrixMaker {
                          *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrixContainer
                          */
 
+                        if (row_i == 2774)
+                            System.out.print("");
 
                         if (!matrixContainer.cTokenRow.containsKey(lemma)) {
                             ///>This is the dict with the pos_tag : row_index
@@ -818,6 +829,11 @@ public class MatrixMaker {
 
                         }
                     }// end of current line. Sentence is completely read.
+
+
+                    //Here we add the sentence columns
+                    addSentenceColumns(lListTokensPOSSeen, 100000);//1865652
+
                     /**
                      * 3. Once the complete pass over the sentence is done, we get what represents each column.
                      * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
@@ -861,6 +877,10 @@ public class MatrixMaker {
                                 matrixContainer.cData.set(indexNPCol + i, matrixContainer.cData.get(indexNPCol + i) + 1);
 
                         } else { ///> Else, we create a new matrixContainer column
+
+                            if (column_j == 6536)
+                                System.out.print("");
+
                             matrixContainer.cNPstringColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                             np_col = column_j;
 
@@ -881,8 +901,6 @@ public class MatrixMaker {
 //                    addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
                     addIndividualDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
-                    //Here we add the sentence columns
-                    addSentenceColumns(lListTokensPOSSeen, 100000);//1865652
 
                     //Here we add the ngrams columns
                     //                addNgramsColumns(lListTokensPOSSeen, 3);
