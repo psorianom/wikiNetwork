@@ -23,7 +23,8 @@ public class MatrixMaker {
     ArrayList<Integer> averageLengthSentence = new ArrayList<>();
     //All this should not be part of the class... it should just have a MatrixContainer object
     private MatrixContainer matrixContainer;
-
+    private String targetWord;
+    private String targetWordPOS;
     //Constructor
     MatrixMaker() {
         row_i = 1; ///> The i index for the matrixContainer
@@ -207,6 +208,9 @@ public class MatrixMaker {
 //            hashcode = matrixContainer.sentenceID; // if I assign the hashcode equal to sentenceID, I will always have different sentences = no counts
             matrixContainer.sentenceID++;
         }
+        if (hashcode == -80095)
+            System.out.println();
+
         int lSentenceDataIndex;
         int ngram_col;
         if (matrixContainer.cSentenceHashColumn.containsKey(hashcode)) {
@@ -232,11 +236,11 @@ public class MatrixMaker {
 
     }
 
-    private final void addIndividualDependenciesColumns(ArrayList<String> listTokens,
+    private final void addDoubleLinkDependenciesColumns(ArrayList<String> listTokens,
                                                         Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
         /**
-         * Generates a column for each dependency relation in the phrase.  A link is created between the word and
-         * its corresponding dependency node. A second link is  containing as information the type of relation plus the head (nsubj_head).
+         * Generates a column for each dependency relation in the phrase.  A link is created between each word participating
+         * in the relation, both the head and the dependent).
          *
          */
 
@@ -257,6 +261,11 @@ public class MatrixMaker {
                 headWord = listTokens.get(headIndex - 1);
                 if (!StringUtils.isAlpha(headWord))
                     continue;
+
+                // if the target word is the head word, we dont want it, for now.
+//                if (headWord.equals(this.targetWord))
+//                    continue;
+
                 dependencyString = dependency + "(" + headWord + ", " + word + ")"; ///>Have to remove one cause listokens is 0 index based
 
                 if (matrixContainer.cDependencyColumn.containsKey(dependencyString)) {
@@ -268,13 +277,6 @@ public class MatrixMaker {
                         }
 
                     }
-//                    else {
-//                        dependencyNameCol = matrixContainer.cDependencyColumn.get(dependencyString);
-//                        matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
-//                        matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
-//                        matrixContainer.cCols.add(dependencyNameCol);
-//                        matrixContainer.cData.add(1);
-//                    }
                 } else {
 
                     matrixContainer.cDependencyColumn.put(dependencyString, ++column_j);
@@ -285,11 +287,11 @@ public class MatrixMaker {
                     matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
 
                     /// Add word (dependant) row, column, and data
-                    if (!matrixContainer.cTokenRow.containsKey(word))
-                        System.out.println();
+//                    if (!matrixContainer.cTokenRow.containsKey(word))
+//                        System.out.println();
 
-                    if (!matrixContainer.cTokenRow.containsKey(headWord))
-                        System.out.println();
+//                    if (!matrixContainer.cTokenRow.containsKey(headWord))
+//                        System.out.println();
 
                     matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
                     matrixContainer.cCols.add(column_j);
@@ -308,11 +310,11 @@ public class MatrixMaker {
     }
 
 
-    private final void addDependenciesColumns(ArrayList<String> listTokens,
-                                              Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
+    private final void addSingleLinkDependenciesColumns(ArrayList<String> listTokens,
+                                                        Map<String, ArrayList<ArrayList<String>>> lDictDependencyHeadIndex) {
         /**
-         * Generates a column for each dependency relation in the phrase.  A link is created between the word and a
-         * dependency node containing as information the type of relation plus the head (nsubj_head).
+         * Generates a column for each dependency relation in the phrase.  Only one link is created between the word and a
+         * dependency node containing the information of the type of relation plus the head (nsubj_head).
          *
          */
 
@@ -325,12 +327,18 @@ public class MatrixMaker {
             ArrayList<ArrayList<String>> listRelations = entry.getValue();
             for (ArrayList<String> relation : listRelations) {
                 String dependency = relation.get(0);
+                if (dependency.equals("PUNCT"))
+                    continue;
                 int headIndex = Integer.parseInt(relation.get(1));
-                String headWord;
+                String headWord = "";
                 if (dependency.equals("root"))
                     headWord = "SENTENCE";
                 else
-                    headWord = listTokens.get(headIndex - 1);
+                    try {
+                        headWord = listTokens.get(headIndex - 1);
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.out.println();
+                    }
                 dependencyName = dependency + "_of_" + headWord; ///>Have to remove one cause listokens is 0 index based
 
                 if (matrixContainer.cDependencyColumn.containsKey(dependencyName)) {
@@ -629,7 +637,7 @@ public class MatrixMaker {
 
                     }
                     //Here we add the dependencies
-                    addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                    addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                     //Here we add the sentence columns
                     addSentenceColumns(lListTokensPOSSeen, 0);//1865652
@@ -700,8 +708,10 @@ public class MatrixMaker {
 
             ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE\t")));
             String targetWordID = instances.get(0).trim();
-//            if (!targetWordID.contains("remove.v"))
+//            if (!targetWordID.contains("turn.v"))
 //                continue;
+            this.targetWord = targetWordID.substring(0, targetWordID.length() - 2);
+            this.targetWordPOS = targetWordID.substring(targetWordID.length() - 1);
             System.out.println("Target word: " + ii + " " + targetWordID);
             instances.remove(0);
             Map<String, MatrixContainer> lTargetWordInstancesMatrix = new HashMap<>();
@@ -760,7 +770,7 @@ public class MatrixMaker {
                          *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrixContainer
                          */
 
-                        if (row_i == 2774)
+                        if (row_i == 2201)
                             System.out.print("");
 
                         if (!matrixContainer.cTokenRow.containsKey(lemma)) {
@@ -832,7 +842,7 @@ public class MatrixMaker {
 
 
                     //Here we add the sentence columns
-                    addSentenceColumns(lListTokensPOSSeen, 100000);//1865652
+                    addSentenceColumns(lListTokensPOSSeen, 0);//1865652
 
                     /**
                      * 3. Once the complete pass over the sentence is done, we get what represents each column.
@@ -878,8 +888,6 @@ public class MatrixMaker {
 
                         } else { ///> Else, we create a new matrixContainer column
 
-                            if (column_j == 6536)
-                                System.out.print("");
 
                             matrixContainer.cNPstringColumn.put(keyNP, ++column_j);///> Dict with the word+np hash : column_index.
                             np_col = column_j;
@@ -898,8 +906,8 @@ public class MatrixMaker {
 
                     }
                     //Here we add the dependencies
-//                    addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
-                    addIndividualDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+//                    addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                    addDoubleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
 
                     //Here we add the ngrams columns
@@ -1157,7 +1165,7 @@ public class MatrixMaker {
 
                 }
                 //Here we add the dependencies
-                addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                 //Here we add the sentence columns
                 addSentenceColumns(lListTokensPOSSeen, 0);//1865652
@@ -1410,7 +1418,7 @@ public class MatrixMaker {
 
                 }
                 //Here we add the dependencies
-                addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                 //Here we add the sentence columns
                 addSentenceColumns(lListTokensPOSSeen, 0);//1865652
@@ -1682,7 +1690,7 @@ public class MatrixMaker {
 
                 }
                 //Here we add the dependencies
-                addDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
                 //Here we add the sentence columns
                 addSentenceColumns(lListTokensPOSSeen, 0);
