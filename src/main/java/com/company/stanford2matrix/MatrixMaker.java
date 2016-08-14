@@ -266,14 +266,15 @@ public class MatrixMaker {
 //                if (headWord.equals(this.targetWord))
 //                    continue;
 
-                dependencyString = dependency + "(" + headWord + ", " + word + ")"; ///>Have to remove one cause listokens is 0 index based
-
+                dependencyString = dependency + "(" + headWord + ", " + word + ")";
                 if (matrixContainer.cDependencyColumn.containsKey(dependencyString)) {
                     if (matrixContainer.cWordDependencyDataVectorIndex.containsKey(dependencyString)) {
                         lDependencyDataIndex = matrixContainer.cWordDependencyDataVectorIndex.get(dependencyString);
                         /// Get the index on the cData vector of the value that must be modified
                         for (int i = 0; i < 2; i++) { /// We update the values of the two words (all relations are binary)
-                            matrixContainer.cData.set(lDependencyDataIndex + i, matrixContainer.cData.get(lDependencyDataIndex + i) + 1);
+                            int valueToAdd = matrixContainer.cData.get(lDependencyDataIndex + i);
+                            valueToAdd /= Math.abs(valueToAdd);
+                            matrixContainer.cData.set(lDependencyDataIndex + i, matrixContainer.cData.get(lDependencyDataIndex + i) + valueToAdd);
                         }
 
                     }
@@ -286,16 +287,16 @@ public class MatrixMaker {
                     /// Save the location of this new value in the cData vector (for later updating)
                     matrixContainer.cWordDependencyDataVectorIndex.put(dependencyString, matrixContainer.cCols.size());
 
-                    /// Add word (dependant) row, column, and data
 //                    if (!matrixContainer.cTokenRow.containsKey(word))
 //                        System.out.println();
 
 //                    if (!matrixContainer.cTokenRow.containsKey(headWord))
 //                        System.out.println();
 
+                    /// Add word (dependant) row, column, and data
                     matrixContainer.cRows.add(matrixContainer.cTokenRow.get(word));
                     matrixContainer.cCols.add(column_j);
-                    matrixContainer.cData.add(1);
+                    matrixContainer.cData.add(-1);
 
                     /// Add head row (if the relation is not root type)
                     matrixContainer.cRows.add(matrixContainer.cTokenRow.get(headWord));
