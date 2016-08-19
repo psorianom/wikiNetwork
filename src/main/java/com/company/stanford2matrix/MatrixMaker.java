@@ -709,7 +709,7 @@ public class MatrixMaker {
 
             ArrayList<String> instances = new ArrayList(Arrays.asList(p.split("%%#INSTANCE\t")));
             String targetWordID = instances.get(0).trim();
-//            if (!targetWordID.contains("turn.v"))
+//            if (!targetWordID.contains("attempt.v"))
 //                continue;
             this.targetWord = targetWordID.substring(0, targetWordID.length() - 2);
             this.targetWordPOS = targetWordID.substring(targetWordID.length() - 1);
