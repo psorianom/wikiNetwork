@@ -907,8 +907,8 @@ public class MatrixMaker {
 
                     }
                     //Here we add the dependencies
-//                    addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
-                    addDoubleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+                    addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
+//                    addDoubleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
 
                     //Here we add the ngrams columns
