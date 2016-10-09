@@ -1670,10 +1670,21 @@ public class MatrixMaker {
 
         if (saveMatrix) {
             /// Create and save matrixContainer to MatrixMarket Format
-            saveMatrixMarketFormat(pathFolder + "/../matrixContainer/MMMatrix", matrixContainer, true);
+//            saveMatrixMarketFormat(pathFolder + "/../matrixContainer/MMMatrix", matrixContainer, true);
 
             /// Save matrixContainer metadata to JSON format
-            saveMetaData(pathFolder + "/../metadata/", matrixContainer);
+//            saveMetaData(pathFolder + "/../metadata/", matrixContainer);
+            Map<String, MatrixContainer> lTargetWordInstancesMatrix = new HashMap<>();
+
+            lTargetWordInstancesMatrix.put("CORPUS", matrixContainer);
+            Gson gson = new Gson();
+            System.out.print("Saving CORPUS JSON file...");
+            String lCorpusMatrixContainer = gson.toJson(lTargetWordInstancesMatrix);
+            saveTextFile(this.pathFolder + "/../metamatrix/" + "allCORPUS", lCorpusMatrixContainer, ".json");
+            System.out.println("Done");
+
+
+
         }
         System.out.println();
         System.out.println(stats);
