@@ -3,10 +3,10 @@ package com.company.stanford2matrix;
 import com.google.gson.Gson;
 import edu.stanford.nlp.util.StringUtils;
 import org.apache.commons.cli.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
 
 import static com.company.stanford2matrix.Utils.*;
 
@@ -1543,9 +1543,9 @@ public class MatrixMaker {
 
                     if (onlyStatistics)
                         continue;
-                    lListAllTokensPOS.add(token_pos);
+                    lListAllTokensPOS.add(lemma);
                     // HERE WE START. If the word is not a punctuation mark (PUNCT) or it is not part of a NP
-                    if (dependency.equals("PUNCT"))
+                    if (!StringUtils.isAlpha(lemma))
                         continue;
 //                    if (!constituency.contains("NP"))
 //                        continue;
@@ -1555,7 +1555,7 @@ public class MatrixMaker {
                     //We save the current word dependency and its head, if it is of interest: nsubj, dobj, or pobj
 //                    if (dependency.equals("nsubj") || dependency.equals("dobj") || dependency.equals("pobj") || dependency.equals("iobj")) {
 //                        lDictDependencyHeadIndex.get(token_pos).add(new HashMap<String, Integer>(){{put(dependency, Integer.parseInt(dependencyHead));}});
-                    lDictDependencyHeadIndex.get(token_pos).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
+                    lDictDependencyHeadIndex.get(lemma).add(new ArrayList<>(Arrays.asList(dependency, dependencyHead)));
 //                    }
 
                     /***
@@ -1564,9 +1564,9 @@ public class MatrixMaker {
                      *  1.a Add to the row list the current row i. rows[0,0,1,1...] for the i vector of the ijv sparse matrixContainer
                      */
 
-                    if (!matrixContainer.cTokenRow.containsKey(token_pos)) {
+                    if (!matrixContainer.cTokenRow.containsKey(lemma)) {
                         ///>This is the dict with the pos_tag : row_index
-                        matrixContainer.cTokenRow.put(token_pos, row_i);
+                        matrixContainer.cTokenRow.put(lemma, row_i);
                         /// Save inverted index
                         matrixContainer.cRowToken.put(row_i, lemma); ///> WTF PAVEL! why dint i put lemma also in cTokenRow???
                         matrixContainer.cPOSToken.get(posTag).add(row_i);
@@ -1575,7 +1575,7 @@ public class MatrixMaker {
                     }
 
 
-                    lListTokensPOSSeen.add(token_pos);
+                    lListTokensPOSSeen.add(lemma);
                     /**
                      * 2. Using the constituency results, we find all the NPs clauses contained in the phrase.
                      *      We discard, at the beginning, any other type of clause (VP, ADJP, PP, PRP, etc).
@@ -1635,6 +1635,11 @@ public class MatrixMaker {
                  * 3.1 We get the columns for each different type of clause. In a dict str:int. Keys are
                  * the clauses, columns are the values: {"NP_18": [1,3,5,7], "VP_70":[2,4], ...}
                  */
+
+                addSentenceColumns(lListTokensPOSSeen, 0);//1865652
+
+
+
                 if (lClausesSeen.isEmpty())
                     continue;
                 ///Converts lListHashNP (a list of dicts containing all the NPs hashchode (569) the words occur in as key
@@ -1690,17 +1695,17 @@ public class MatrixMaker {
                     }
 
                 }
+
+                //Here we add the sentence columns
+                //addSentenceColumns(lListTokensPOSSeen, 0);
                 //Here we add the dependencies
                 addSingleLinkDependenciesColumns(lListAllTokensPOS, lDictDependencyHeadIndex);
 
-                //Here we add the sentence columns
-                addSentenceColumns(lListTokensPOSSeen, 0);
+
 //                addSentenceColumns(lListTokensPOSSeen, (int) Math.pow(2,8));//with sentences: 2349022 // without sentences: 1865652 // difference: 483k
                 //Here we add the ngrams columns
 //                addNgramsColumns(lListTokensPOSSeen, 3);
 
-//                if (matrixContainer.cRows.size() != matrixContainer.cCols.size())
-//                    throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something is wrong...");
 
                 /** Here we save the information about the columns, and the constituents each phrase is made of
                  * **/
@@ -1817,7 +1822,11 @@ public class MatrixMaker {
         System.out.println("\tNumber of tokens: " + Integer.toString(sumValues(cDictAllTokens)));
         System.out.println("\tAverage number of tokens per sentence: " + Double.toString(average(averageLengthSentence)));
 
-        /// Matrix creation done. We save it and display some stats
+
+        Set uniquecRows = new HashSet(matrixContainer.cRows);
+//        if (Collections.max(matrixContainer.cRows) > uniquecRows.size())
+//            throw new Utils.InvalidLengthsException("We have bigger indices in rows than dimensions in i.");
+
         if (matrixContainer.cRows.size() != matrixContainer.cCols.size())
             throw new Utils.InvalidLengthsException("The length of vector i and j should be ALWAYS the same. Something was wrong...");
         ///>Print some matrixContainer statistics

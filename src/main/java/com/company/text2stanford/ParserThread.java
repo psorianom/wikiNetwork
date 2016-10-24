@@ -1,10 +1,13 @@
 package com.company.text2stanford;
 
+import com.company.stanford2matrix.*;
+import com.company.stanford2matrix.Utils;
 import edu.stanford.nlp.ling.CoreAnnotations.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.BasicDependenciesAnnotation;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
@@ -82,6 +85,37 @@ public class ParserThread implements Runnable {
         tokenPOStag.put("POS", POStags);
         return tokenPOStag;
     }
+
+//    public HashMap<Integer, String> coreNLPTokenDependenciesAll(SemanticGraph depGraph) {
+//        /**
+//         * This function takes a SemanticGraph object (with the typed dependencies of a sentence) and returns
+//         * a dictionary of dictionaries: {wordIndex:{ "relation": subj", "headIndex": "2"}, ...}
+//         * Each word of the phrase has a dict with each dependency it belongs to and its corresponding head.
+//         */
+//        HashMap<Integer, String> tokenDeps = new Utils.DefaultDict<>(String.class);
+//        Collection<TypedDependency> typedDeps = depGraph.typedDependencies();
+//        for (TypedDependency depn : typedDeps) {
+//            String allDeps = "";
+//            String relation = depn.reln().getShortName();
+//            if (relation.toLowerCase().equals("root"))
+//                continue;
+//
+//            int depIndex = depn.dep().index();
+//            int headIndex = depn.gov().index();
+//
+//            // Add dependent relation
+//            tokenDeps[depIndex] += Integer.toString(headIndex)
+//
+////            if (depn.reln().getSpecific() != null)
+////                relation += "_" + depn.reln().getSpecific();
+//
+//            relationHead.put("relation", relation);
+//            relationHead.put("headIndex", Integer.toString(headIndex));
+//            tokenDeps.put(wordIndex, relationHead);
+//        }
+//
+//        return tokenDeps;
+//    }
 
     public HashMap<Integer, HashMap> coreNLPTokenDependencies(SemanticGraph depGraph) {
         /**
@@ -415,9 +449,9 @@ public class ParserThread implements Runnable {
                     continue;
                 lineFile = paragraph;
                 paragraph = "";
-                lineFile = lineFile.replaceAll("^[0-9]+", "");
+//                lineFile = lineFile.replaceAll("^[0-9]+", "");
                 // Parse the document with CoreNLP
-//                docText = "The collection is often a set of results of an experiment, or a set of results from a survey";
+//                lineFile = "Australian scientist discovers star with teslecope.";
                 Annotation document = new Annotation(lineFile);
                 coreParser.annotate(document);
                 // Treat the result
@@ -436,6 +470,7 @@ public class ParserThread implements Runnable {
 
                     // this is the dependency graph of the current sentence
                     SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                    SemanticGraph dependencies2 = sentence.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
                     HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
                     // traversing the words in the current sentence
@@ -484,11 +519,13 @@ public class ParserThread implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
+
         System.out.print("WORKING on " + pathFile + "\n");
 //        parseWiki(pathFile);
-//        parseOANCText(pathFile);
+        parseOANCText(pathFile);
 //        parseSemeval2007(pathFile);
-        parseSemeval2010(pathFile, "train");
+//        parseSemeval2010(pathFile, "train");
         System.out.println("... DONE");
 
     }
