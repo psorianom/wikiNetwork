@@ -122,6 +122,8 @@ public class WikiParser {
             case "en":
                 props.put("annotators", "tokenize, ssplit, pos, lemma, parse");
                 props.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz");
+//                props.put("tokenize.options", "normalizeParentheses=false,unicodeQuotes=false");
+                props.put("tokenize.options", "ptb3Escaping=false");
                 break;
             case "es":
                 props.put("annotators", "tokenize, ssplit, pos, parse");
