@@ -23,6 +23,7 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -517,13 +518,122 @@ public class ParserThread implements Runnable {
 
     }
 
+    private void parseNERText(String pathFile) {
+        /**
+         * Parses NER source text (a regular text file, i.e., no one-word per line) using specifically the tokens
+         * determined by the NER original corpus. Hopefully.
+         */
+
+
+        LineIterator it = null;
+        try {
+
+
+            File input = new File(pathFile);
+            String parsedFilePath = input.getCanonicalPath() + ".parsed";
+            FileWriter parsedOutput = new FileWriter(parsedFilePath);
+            BufferedWriter bufferedOut = new BufferedWriter(parsedOutput);
+            it = FileUtils.lineIterator(input, "UTF-8");
+            /// We remove the line numbers if any
+
+            bufferedOut.write("FILENAME " + input.getName() + nline);
+            bufferedOut.write(header + nline);
+            bufferedOut.write("%%#PAGE " + input.getName() + nline);
+
+            String paragraph = "";
+            // Specify that we want to tokenize by whitespace
+            Properties NERCoreNLPprops = this.coreParser.getProperties();
+            NERCoreNLPprops.setProperty("tokenize.whitespace", "true");
+            this.coreParser = new StanfordCoreNLP(NERCoreNLPprops);
+
+            while (it.hasNext()) {
+
+                String lineFile = it.nextLine().trim();
+                if (!lineFile.isEmpty()) {
+                    paragraph = paragraph + lineFile + " ";
+                    continue;
+                } else if (paragraph.isEmpty())
+                    continue;
+                lineFile = paragraph;
+                paragraph = "";
+                // Parse the document with CoreNLP
+
+//                lineFile = "Australian scientist discovers star with telescope.";
+                Annotation document = new Annotation(lineFile);
+                coreParser.annotate(document);
+                // Treat the result
+
+
+                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                int sentenceId = 0;
+                for (CoreMap sentence : sentences) {
+                    List<CoreLabel> listTokens = sentence.get(TokensAnnotation.class);
+                    int sentenceSize = listTokens.size();
+                    String line;
+                    sentenceId++;
+                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + "\t" + Integer.toString(sentenceSize) + nline);
+
+                    // this is the parse tree of the current sentence
+                    Tree tree = sentence.get(TreeAnnotation.class);
+                    HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
+
+                    // this is the dependency graph of the current sentence
+                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                    SemanticGraph dependencies2 = sentence.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
+                    HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
+
+                    // traversing the words in the current sentence
+                    // a CoreLabel is a CoreMap with additional token-specific methods
+                    String head;
+                    String dependency;
+                    for (CoreLabel token : listTokens) {
+
+                        // this is the text of the token
+                        String word = token.get(TextAnnotation.class);
+                        // this is the index of said token
+                        int wordIndex = token.get(IndexAnnotation.class);
+                        // this is the POS tag of the token
+                        String pos = token.get(PartOfSpeechAnnotation.class);
+                        // this is the  lemma of the token
+                        String lemma = token.get(LemmaAnnotation.class);
+                        // this is the constituency information of the token
+                        String constituency = String.join(",", constituencyTokens.get(wordIndex));
+                        // this is the constituency information of the token
+                        // the head first
+                        if (dependencyTokens.get(wordIndex) == null) {
+                            head = "0";
+                            dependency = "PUNCT";
+                        } else {
+                            head = (String) dependencyTokens.get(wordIndex).get("headIndex");
+                            // the relation (dependency label)
+                            dependency = (String) dependencyTokens.get(wordIndex).get("relation");
+                        }
+                        // create the line that will be written in the output
+                        line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
+                        bufferedOut.write(line);
+
+                    }
+
+                }
+            }
+
+            bufferedOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            LineIterator.closeQuietly(it);
+        }
+
+    }
+
     @Override
     public void run() {
         System.out.println("Remember to use the appropriate parser, depending on the data that you are trying to parse.\n");
 
         System.out.print("WORKING on " + pathFile + "\n");
 //        parseWiki(pathFile);
-        parseOANCText(pathFile);
+//        parseOANCText(pathFile);
+        parseNERText(pathFile);
 //        parseSemeval2007(pathFile);
 //        parseSemeval2010(pathFile, "train");
         System.out.println("... DONE");
