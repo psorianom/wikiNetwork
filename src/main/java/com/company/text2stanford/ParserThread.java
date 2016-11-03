@@ -546,12 +546,13 @@ public class ParserThread implements Runnable {
             NERCoreNLPprops.setProperty("tokenize.whitespace", "true");
             this.coreParser = new StanfordCoreNLP(NERCoreNLPprops);
 
-            while (it.hasNext()) {
+            do {
 
                 String lineFile = it.nextLine().trim();
                 if (!lineFile.isEmpty()) {
                     paragraph = paragraph + lineFile + " ";
-                    continue;
+                    if (it.hasNext())
+                        continue;
                 } else if (paragraph.isEmpty())
                     continue;
                 lineFile = paragraph;
@@ -616,7 +617,7 @@ public class ParserThread implements Runnable {
 
                 }
             }
-
+            while (it.hasNext());
             bufferedOut.close();
         } catch (IOException e) {
             e.printStackTrace();
