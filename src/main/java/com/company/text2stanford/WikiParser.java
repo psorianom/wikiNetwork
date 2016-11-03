@@ -91,6 +91,7 @@ public class WikiParser {
         ArrayList<String> listPaths = listFiles(inputFolderPath);
         listPaths = removeAlreadyParsedFolders(listPaths, pickupFolder, folderLimit);
 
+
         //Debug
 //        listPaths.clear();
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/es_AA/wiki_00");
@@ -98,6 +99,11 @@ public class WikiParser {
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/DU/wiki_12");
 
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
+        if (listPaths.size() == 1) {
+            Properties NERCoreNLPprops = nlpPipe.getProperties();
+            NERCoreNLPprops.setProperty("threads", "8");
+            nlpPipe = new StanfordCoreNLP(NERCoreNLPprops);
+        }
 //        ParserThread.lock = new ReentrantLock();
         for (String path : listPaths) {
             Runnable worker = new ParserThread(path, nlpPipe);
