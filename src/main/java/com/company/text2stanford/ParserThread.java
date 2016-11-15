@@ -536,9 +536,9 @@ public class ParserThread implements Runnable {
             it = FileUtils.lineIterator(input, "UTF-8");
             /// We remove the line numbers if any
 
-            bufferedOut.write("FILENAME " + input.getName() + nline);
-            bufferedOut.write(header + nline);
-            bufferedOut.write("%%#PAGE " + input.getName() + nline);
+//            bufferedOut.write("FILENAME " + input.getName() + nline);
+//            bufferedOut.write(header + nline);
+//            bufferedOut.write("%%#PAGE " + input.getName() + nline);
 
             String paragraph = "";
             // Specify that we want to tokenize by whitespace
@@ -572,8 +572,8 @@ public class ParserThread implements Runnable {
                     int sentenceSize = listTokens.size();
                     String line;
                     sentenceId++;
-                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + "\t" + Integer.toString(sentenceSize) + nline);
-
+//                    bufferedOut.write("%%#SEN\t" + Integer.toString(sentenceId) + "\t" + Integer.toString(sentenceSize) + nline);
+                    bufferedOut.write("\n");
                     // this is the parse tree of the current sentence
                     Tree tree = sentence.get(TreeAnnotation.class);
                     HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
