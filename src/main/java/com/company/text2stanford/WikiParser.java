@@ -99,12 +99,6 @@ public class WikiParser {
 //        listPaths.add("/media/stuff/Pavel/Documents/Eclipse/workspace/data/these_graph/wikidata/DU/wiki_12");
 
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(nThreads, listPaths.size()));
-        if (listPaths.size() == 1) {
-            Properties NERCoreNLPprops = nlpPipe.getProperties();
-            NERCoreNLPprops.setProperty("threads", "8");
-            nlpPipe = new StanfordCoreNLP(NERCoreNLPprops);
-        }
-//        ParserThread.lock = new ReentrantLock();
         for (String path : listPaths) {
             Runnable worker = new ParserThread(path, nlpPipe);
             //worker will execute its "run()" function

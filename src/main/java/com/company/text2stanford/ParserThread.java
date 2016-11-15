@@ -520,11 +520,11 @@ public class ParserThread implements Runnable {
 
     private void parseNERText(String pathFile) {
         /**
-         * Parses NER source text (a regular text file, i.e., no one-word per line) using specifically the tokens
-         * determined by the NER original corpus. Hopefully.
+         * Parses NER source text (a word per line document with the tag to classify as last element of the line)
+         * using specifically the tokens determined by the NER original corpus. Hopefully.
+         *
+         * It does not take into consideration any other information aside from the word and the IOB tag.
          */
-
-
         LineIterator it = null;
         try {
 
@@ -545,12 +545,18 @@ public class ParserThread implements Runnable {
             Properties NERCoreNLPprops = this.coreParser.getProperties();
             NERCoreNLPprops.setProperty("tokenize.whitespace", "true");
             this.coreParser = new StanfordCoreNLP(NERCoreNLPprops);
-
-            do {
+            String[] splittedLine;
+            ArrayList<String> tagList = new ArrayList<>();
+            while (it.hasNext()) {
 
                 String lineFile = it.nextLine().trim();
+                String lineWord;
+
                 if (!lineFile.isEmpty()) {
-                    paragraph = paragraph + lineFile + " ";
+                    splittedLine = lineFile.split(" ");
+                    lineWord = splittedLine[0];
+                    tagList.add(splittedLine[splittedLine.length - 1]);
+                    paragraph = paragraph + lineWord + " ";
                     if (it.hasNext())
                         continue;
                 } else if (paragraph.isEmpty())
@@ -579,14 +585,15 @@ public class ParserThread implements Runnable {
                     HashMap<Integer, ArrayList> constituencyTokens = coreNLPTokenConstituents(tree.skipRoot());
 
                     // this is the dependency graph of the current sentence
-                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
-                    SemanticGraph dependencies2 = sentence.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
+//                    SemanticGraph dependencies = sentence.get(BasicDependenciesAnnotation.class);
+                    SemanticGraph dependencies = sentence.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
                     HashMap<Integer, HashMap> dependencyTokens = coreNLPTokenDependencies(dependencies);
 
                     // traversing the words in the current sentence
                     // a CoreLabel is a CoreMap with additional token-specific methods
                     String head;
                     String dependency;
+                    ListIterator<String> iter = tagList.listIterator();
                     for (CoreLabel token : listTokens) {
 
                         // this is the text of the token
@@ -610,14 +617,16 @@ public class ParserThread implements Runnable {
                             dependency = (String) dependencyTokens.get(wordIndex).get("relation");
                         }
                         // create the line that will be written in the output
-                        line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency + nline;
+                        line = word + "\t" + lemma + "\t" + pos + "\t" + constituency + "\t" + head + "\t" + dependency +
+                                "\t" + iter.next() + nline;
                         bufferedOut.write(line);
 
                     }
 
                 }
+                tagList = new ArrayList<>();
             }
-            while (it.hasNext());
+
             bufferedOut.close();
         } catch (IOException e) {
             e.printStackTrace();
