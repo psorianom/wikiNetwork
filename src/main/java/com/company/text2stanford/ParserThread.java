@@ -1,7 +1,5 @@
 package com.company.text2stanford;
 
-import com.company.stanford2matrix.*;
-import com.company.stanford2matrix.Utils;
 import edu.stanford.nlp.ling.CoreAnnotations.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -23,7 +21,6 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -518,7 +515,7 @@ public class ParserThread implements Runnable {
 
     }
 
-    private void parseNERText(String pathFile) {
+    private void parseCONLLText(String pathFile) {
         /**
          * Parses NER source text (a word per line document with the tag to classify as last element of the line)
          * using specifically the tokens determined by the NER original corpus. Hopefully.
@@ -606,6 +603,8 @@ public class ParserThread implements Runnable {
                         String lemma = token.get(LemmaAnnotation.class);
                         // this is the constituency information of the token
                         String constituency = String.join(",", constituencyTokens.get(wordIndex));
+                        if (constituency.isEmpty())
+                            constituency = "NA";
                         // this is the constituency information of the token
                         // the head first
                         if (dependencyTokens.get(wordIndex) == null) {
@@ -643,7 +642,7 @@ public class ParserThread implements Runnable {
         System.out.print("WORKING on " + pathFile + "\n");
 //        parseWiki(pathFile);
 //        parseOANCText(pathFile);
-        parseNERText(pathFile);
+        parseCONLLText(pathFile);
 //        parseSemeval2007(pathFile);
 //        parseSemeval2010(pathFile, "train");
         System.out.println("... DONE");
